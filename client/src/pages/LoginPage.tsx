@@ -17,15 +17,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const utils = trpc.useUtils();
   const loginMutation = trpc.auth.loginWithPassword.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.requiresMfa) {
         setPendingMfaUserId(data.userId);
         navigate("/mfa");
       } else if (data.user) {
-        setDemoUser(data.user);
+        // Session cookie is now set by the server — invalidate auth cache and navigate
+        await utils.auth.me.invalidate();
         navigate("/dashboard");
-        window.location.reload();
       }
     },
     onError: (err) => {

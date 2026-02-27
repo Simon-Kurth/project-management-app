@@ -7,6 +7,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { sdk } from "./_core/sdk";
 import {
   createDemoUser,
   getAuditLogs,
@@ -82,6 +83,14 @@ export const appRouter = router({
 
         await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_SUCCESS", resource: "auth", ipAddress: ip, userAgent: ua });
 
+        // Create a signed session cookie so protectedProcedure can authenticate subsequent requests
+        const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name ?? user.email ?? "" });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+          ...cookieOptions,
+          maxAge: 8 * 60 * 60 * 1000, // 8 hours
+        });
+
         return {
           requiresMfa: false,
           userId: user.id,
@@ -123,6 +132,14 @@ export const appRouter = router({
         }
 
         await writeAuditLog({ userId: user.id, action: "LOGIN_SUCCESS_MFA", resource: "auth", ipAddress: ip, userAgent: ua });
+
+        // Create signed session cookie after successful MFA
+        const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name ?? user.email ?? "" });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+          ...cookieOptions,
+          maxAge: 8 * 60 * 60 * 1000,
+        });
 
         return {
           user: { id: user.id, email: user.email, name: user.name, role: user.role, mfaEnabled: user.mfaEnabled },
