@@ -1,0 +1,377 @@
+// ─── Mock Data Service ────────────────────────────────────────────────────────
+// Provides realistic placeholder data for all 9 dashboard tabs.
+// Replace individual sections with live connector data as integrations are wired.
+
+export const mockData = {
+  executiveSummary: {
+    kpis: [
+      { label: "ARR", value: "$19.28M", change: "+22.3%", trend: "up" },
+      { label: "Active Customers", value: "1,847", change: "+8.4%", trend: "up" },
+      { label: "NPS Score", value: "67", change: "+5", trend: "up" },
+      { label: "Headcount", value: "312", change: "+18", trend: "up" },
+      { label: "Gross Margin", value: "71.4%", change: "+2.1%", trend: "up" },
+      { label: "Churn Rate", value: "2.1%", change: "-0.3%", trend: "down" },
+    ],
+    revenueVsTarget: [
+      { month: "Jul", actual: 1420000, target: 1350000 },
+      { month: "Aug", actual: 1520000, target: 1450000 },
+      { month: "Sep", actual: 1490000, target: 1500000 },
+      { month: "Oct", actual: 1650000, target: 1580000 },
+      { month: "Nov", actual: 1720000, target: 1680000 },
+      { month: "Dec", actual: 1850000, target: 1800000 },
+    ],
+    departmentHealth: [
+      { dept: "Engineering", score: 87, status: "green" },
+      { dept: "Sales", score: 92, status: "green" },
+      { dept: "Customer Success", score: 78, status: "yellow" },
+      { dept: "Marketing", score: 84, status: "green" },
+      { dept: "IT/Ops", score: 71, status: "yellow" },
+      { dept: "QA", score: 89, status: "green" },
+    ],
+    alerts: [
+      { id: 1, severity: "high", message: "SSO Integration project at risk — 14 days overdue", dept: "Delivery" },
+      { id: 2, severity: "medium", message: "3 P1 incidents open in IT/Ops this week", dept: "IT/Ops" },
+      { id: 3, severity: "low", message: "Q4 sales forecast revised upward by 8%", dept: "Sales" },
+      { id: 4, severity: "medium", message: "Customer churn spike detected in APAC region", dept: "CSM" },
+    ],
+    headcountByDept: [
+      { dept: "Engineering", count: 124 },
+      { dept: "Sales", count: 58 },
+      { dept: "Customer Success", count: 42 },
+      { dept: "Marketing", count: 31 },
+      { dept: "IT/Ops", count: 28 },
+      { dept: "G&A", count: 19 },
+      { dept: "QA", count: 10 },
+    ],
+  },
+
+  financials: {
+    kpis: [
+      { label: "ARR", value: "$19.28M", change: "+22.3%", trend: "up" },
+      { label: "MRR", value: "$1.607M", change: "+18.1%", trend: "up" },
+      { label: "Gross Profit", value: "$3.29M", change: "+14.2%", trend: "up" },
+      { label: "Operating Expenses", value: "$2.14M", change: "+6.8%", trend: "up" },
+      { label: "EBITDA", value: "$1.15M", change: "+28.4%", trend: "up" },
+      { label: "Cash Runway", value: "18 months", change: "+2 mo", trend: "up" },
+    ],
+    monthlyRevenue: [
+      { month: "Jan", revenue: 1420000, expenses: 1180000, profit: 240000 },
+      { month: "Feb", revenue: 1380000, expenses: 1150000, profit: 230000 },
+      { month: "Mar", revenue: 1520000, expenses: 1210000, profit: 310000 },
+      { month: "Apr", revenue: 1490000, expenses: 1190000, profit: 300000 },
+      { month: "May", revenue: 1610000, expenses: 1240000, profit: 370000 },
+      { month: "Jun", revenue: 1580000, expenses: 1220000, profit: 360000 },
+      { month: "Jul", revenue: 1650000, expenses: 1260000, profit: 390000 },
+      { month: "Aug", revenue: 1720000, expenses: 1290000, profit: 430000 },
+      { month: "Sep", revenue: 1680000, expenses: 1270000, profit: 410000 },
+      { month: "Oct", revenue: 1790000, expenses: 1310000, profit: 480000 },
+      { month: "Nov", revenue: 1850000, expenses: 1340000, profit: 510000 },
+      { month: "Dec", revenue: 1960000, expenses: 1380000, profit: 580000 },
+    ],
+    revenueByProduct: [
+      { product: "Platform License", revenue: 8200000, percentage: 42.5 },
+      { product: "Professional Services", revenue: 4800000, percentage: 24.9 },
+      { product: "Support & Maintenance", revenue: 3600000, percentage: 18.7 },
+      { product: "Training", revenue: 1500000, percentage: 7.8 },
+      { product: "Add-ons", revenue: 1180000, percentage: 6.1 },
+    ],
+    expenseBreakdown: [
+      { category: "Salaries & Benefits", amount: 9800000, percentage: 61.2 },
+      { category: "Infrastructure", amount: 2100000, percentage: 13.1 },
+      { category: "Sales & Marketing", amount: 1800000, percentage: 11.2 },
+      { category: "R&D", amount: 1200000, percentage: 7.5 },
+      { category: "G&A", amount: 1100000, percentage: 6.9 },
+    ],
+    cashFlow: [
+      { month: "Jul", operating: 380000, investing: -120000, financing: 0 },
+      { month: "Aug", operating: 420000, investing: -95000, financing: 0 },
+      { month: "Sep", operating: 395000, investing: -110000, financing: 0 },
+      { month: "Oct", operating: 465000, investing: -130000, financing: 500000 },
+      { month: "Nov", operating: 490000, investing: -105000, financing: 0 },
+      { month: "Dec", operating: 560000, investing: -140000, financing: 0 },
+    ],
+  },
+
+  delivery: {
+    kpis: [
+      { label: "On-Time Delivery", value: "87.4%", change: "+3.2%", trend: "up" },
+      { label: "Active Projects", value: "23", change: "+2", trend: "up" },
+      { label: "Avg Cycle Time", value: "14.2 days", change: "-1.8d", trend: "down" },
+      { label: "Scope Creep Rate", value: "11.3%", change: "-2.1%", trend: "down" },
+      { label: "Customer Satisfaction", value: "4.3/5", change: "+0.2", trend: "up" },
+      { label: "Blocked Items", value: "7", change: "-3", trend: "down" },
+    ],
+    projects: [
+      { id: "PRJ-001", name: "Platform v3.0 Migration", status: "in_progress", progress: 68, dueDate: "2025-02-28", owner: "Sarah K.", priority: "high" },
+      { id: "PRJ-002", name: "Mobile App Redesign", status: "in_progress", progress: 45, dueDate: "2025-03-15", owner: "James L.", priority: "high" },
+      { id: "PRJ-003", name: "API Gateway Upgrade", status: "completed", progress: 100, dueDate: "2024-12-10", owner: "Maria C.", priority: "medium" },
+      { id: "PRJ-004", name: "Analytics Dashboard", status: "in_progress", progress: 82, dueDate: "2025-01-31", owner: "David P.", priority: "medium" },
+      { id: "PRJ-005", name: "SSO Integration", status: "at_risk", progress: 30, dueDate: "2025-01-15", owner: "Lisa T.", priority: "high" },
+      { id: "PRJ-006", name: "Data Warehouse Setup", status: "planning", progress: 10, dueDate: "2025-04-30", owner: "Robert M.", priority: "low" },
+      { id: "PRJ-007", name: "Customer Portal v2", status: "in_progress", progress: 55, dueDate: "2025-02-14", owner: "Anna W.", priority: "medium" },
+    ],
+    velocityTrend: [
+      { sprint: "Sprint 18", planned: 42, completed: 38 },
+      { sprint: "Sprint 19", planned: 45, completed: 44 },
+      { sprint: "Sprint 20", planned: 48, completed: 43 },
+      { sprint: "Sprint 21", planned: 50, completed: 47 },
+      { sprint: "Sprint 22", planned: 46, completed: 40 },
+      { sprint: "Sprint 23", planned: 52, completed: 49 },
+    ],
+    deliveryByTeam: [
+      { team: "Platform", onTime: 91, delayed: 9 },
+      { team: "Mobile", onTime: 78, delayed: 22 },
+      { team: "API", onTime: 95, delayed: 5 },
+      { team: "Frontend", onTime: 85, delayed: 15 },
+      { team: "Data", onTime: 82, delayed: 18 },
+    ],
+  },
+
+  development: {
+    kpis: [
+      { label: "Deployments (30d)", value: "147", change: "+23", trend: "up" },
+      { label: "Open PRs", value: "34", change: "-8", trend: "down" },
+      { label: "Code Coverage", value: "78.3%", change: "+2.1%", trend: "up" },
+      { label: "Avg PR Review Time", value: "18.4h", change: "-3.2h", trend: "down" },
+      { label: "Build Success Rate", value: "94.7%", change: "+1.3%", trend: "up" },
+      { label: "Tech Debt Score", value: "B+", change: "stable", trend: "neutral" },
+    ],
+    deploymentFrequency: [
+      { week: "W1", deployments: 28, rollbacks: 1 },
+      { week: "W2", deployments: 35, rollbacks: 2 },
+      { week: "W3", deployments: 31, rollbacks: 0 },
+      { week: "W4", deployments: 42, rollbacks: 1 },
+      { week: "W5", deployments: 38, rollbacks: 3 },
+      { week: "W6", deployments: 45, rollbacks: 1 },
+    ],
+    burndown: [
+      { day: "Day 1", remaining: 120, ideal: 120 },
+      { day: "Day 3", remaining: 108, ideal: 100 },
+      { day: "Day 5", remaining: 95, ideal: 80 },
+      { day: "Day 7", remaining: 78, ideal: 60 },
+      { day: "Day 9", remaining: 62, ideal: 40 },
+      { day: "Day 11", remaining: 41, ideal: 20 },
+      { day: "Day 13", remaining: 18, ideal: 0 },
+    ],
+    topContributors: [
+      { name: "Alex M.", commits: 142, prs: 28, reviews: 64 },
+      { name: "Sarah K.", commits: 118, prs: 22, reviews: 51 },
+      { name: "James L.", commits: 97, prs: 19, reviews: 43 },
+      { name: "Maria C.", commits: 89, prs: 17, reviews: 38 },
+      { name: "David P.", commits: 76, prs: 14, reviews: 29 },
+    ],
+    languageBreakdown: [
+      { language: "TypeScript", percentage: 48 },
+      { language: "Python", percentage: 22 },
+      { language: "Go", percentage: 15 },
+      { language: "SQL", percentage: 9 },
+      { language: "Other", percentage: 6 },
+    ],
+  },
+
+  itops: {
+    kpis: [
+      { label: "System Uptime", value: "99.87%", change: "+0.02%", trend: "up" },
+      { label: "Open Incidents", value: "3", change: "-2", trend: "down" },
+      { label: "MTTR", value: "42 min", change: "-8 min", trend: "down" },
+      { label: "Infra Cost (mo)", value: "$87.4K", change: "+4.2%", trend: "up" },
+      { label: "Active Alerts", value: "12", change: "+3", trend: "up" },
+      { label: "Patch Compliance", value: "96.2%", change: "+1.8%", trend: "up" },
+    ],
+    serviceStatus: [
+      { service: "API Gateway", status: "operational", uptime: 99.98, latency: 42 },
+      { service: "Auth Service", status: "operational", uptime: 99.99, latency: 18 },
+      { service: "Database Cluster", status: "operational", uptime: 99.95, latency: 8 },
+      { service: "CDN", status: "operational", uptime: 100, latency: 12 },
+      { service: "Payment Service", status: "degraded", uptime: 98.4, latency: 320 },
+      { service: "Email Service", status: "operational", uptime: 99.7, latency: 95 },
+      { service: "Search Service", status: "operational", uptime: 99.9, latency: 28 },
+      { service: "Analytics Pipeline", status: "maintenance", uptime: 97.2, latency: 0 },
+    ],
+    resourceUtilization: [
+      { time: "00:00", cpu: 42, memory: 58, network: 31 },
+      { time: "04:00", cpu: 28, memory: 55, network: 18 },
+      { time: "08:00", cpu: 65, memory: 68, network: 52 },
+      { time: "12:00", cpu: 78, memory: 74, network: 71 },
+      { time: "16:00", cpu: 82, memory: 79, network: 68 },
+      { time: "20:00", cpu: 61, memory: 72, network: 48 },
+    ],
+    incidents: [
+      { id: "INC-2847", title: "Payment service high latency", severity: "P1", status: "open", opened: "2025-01-14 09:23", assignee: "Ops Team" },
+      { id: "INC-2846", title: "Analytics pipeline scheduled maintenance", severity: "P3", status: "in_progress", opened: "2025-01-13 22:00", assignee: "Data Eng" },
+      { id: "INC-2845", title: "CDN cache invalidation delay", severity: "P2", status: "resolved", opened: "2025-01-12 14:15", assignee: "Infra Team" },
+    ],
+  },
+
+  qa: {
+    kpis: [
+      { label: "Test Pass Rate", value: "96.8%", change: "+1.2%", trend: "up" },
+      { label: "Open Defects", value: "47", change: "-12", trend: "down" },
+      { label: "Critical Bugs", value: "3", change: "-1", trend: "down" },
+      { label: "Automation Coverage", value: "84.2%", change: "+3.4%", trend: "up" },
+      { label: "Avg Fix Time", value: "2.3 days", change: "-0.4d", trend: "down" },
+      { label: "Regression Rate", value: "4.1%", change: "-0.8%", trend: "down" },
+    ],
+    testResults: [
+      { suite: "Unit Tests", total: 4820, passed: 4791, failed: 29, skipped: 0 },
+      { suite: "Integration Tests", total: 1240, passed: 1218, failed: 22, skipped: 0 },
+      { suite: "E2E Tests", total: 380, passed: 361, failed: 14, skipped: 5 },
+      { suite: "Performance Tests", total: 120, passed: 112, failed: 8, skipped: 0 },
+      { suite: "Security Scans", total: 85, passed: 83, failed: 2, skipped: 0 },
+    ],
+    defectTrend: [
+      { week: "W1", opened: 18, closed: 22, backlog: 61 },
+      { week: "W2", opened: 14, closed: 19, backlog: 56 },
+      { week: "W3", opened: 21, closed: 18, backlog: 59 },
+      { week: "W4", opened: 11, closed: 23, backlog: 47 },
+    ],
+    defects: [
+      { id: "BUG-1124", title: "Payment form validation bypass on mobile", severity: "critical", status: "open", component: "Payments", age: "3 days" },
+      { id: "BUG-1118", title: "Dashboard chart renders incorrectly on Safari", severity: "major", status: "in_progress", component: "Frontend", age: "7 days" },
+      { id: "BUG-1115", title: "Export CSV includes extra blank rows", severity: "minor", status: "open", component: "Reports", age: "12 days" },
+      { id: "BUG-1109", title: "Search returns stale results after filter change", severity: "major", status: "in_progress", component: "Search", age: "15 days" },
+    ],
+  },
+
+  csm: {
+    kpis: [
+      { label: "Customer Health Score", value: "78/100", change: "+3", trend: "up" },
+      { label: "Open Tickets", value: "142", change: "-18", trend: "down" },
+      { label: "Avg Resolution Time", value: "6.4h", change: "-1.2h", trend: "down" },
+      { label: "CSAT Score", value: "4.4/5", change: "+0.1", trend: "up" },
+      { label: "At-Risk Accounts", value: "14", change: "+3", trend: "up" },
+      { label: "Renewals Due (90d)", value: "38", change: "+5", trend: "up" },
+    ],
+    ticketVolume: [
+      { month: "Jul", opened: 284, resolved: 271, escalated: 12 },
+      { month: "Aug", opened: 312, resolved: 298, escalated: 18 },
+      { month: "Sep", opened: 298, resolved: 305, escalated: 9 },
+      { month: "Oct", opened: 341, resolved: 328, escalated: 21 },
+      { month: "Nov", opened: 318, resolved: 334, escalated: 14 },
+      { month: "Dec", opened: 289, resolved: 301, escalated: 8 },
+    ],
+    accountHealth: [
+      { segment: "Healthy", count: 1284, percentage: 69.5 },
+      { segment: "At Risk", count: 258, percentage: 14.0 },
+      { segment: "Churning", count: 142, percentage: 7.7 },
+      { segment: "New (<90d)", count: 163, percentage: 8.8 },
+    ],
+    accounts: [
+      { name: "Acme Corporation", arr: 480000, health: 42, csm: "Rachel T.", renewalDate: "2025-03-31", status: "at_risk" },
+      { name: "TechFlow Inc", arr: 320000, health: 88, csm: "Mike S.", renewalDate: "2025-06-30", status: "healthy" },
+      { name: "GlobalRetail Co", arr: 280000, health: 71, csm: "Rachel T.", renewalDate: "2025-02-28", status: "needs_attention" },
+      { name: "FinServ Partners", arr: 560000, health: 94, csm: "Carlos M.", renewalDate: "2025-09-30", status: "healthy" },
+      { name: "MedTech Solutions", arr: 190000, health: 35, csm: "Mike S.", renewalDate: "2025-01-31", status: "churning" },
+    ],
+  },
+
+  sales: {
+    kpis: [
+      { label: "Pipeline Value", value: "$8.4M", change: "+12.3%", trend: "up" },
+      { label: "Deals Closed (MTD)", value: "28", change: "+6", trend: "up" },
+      { label: "Win Rate", value: "34.2%", change: "+2.8%", trend: "up" },
+      { label: "Avg Deal Size", value: "$42.8K", change: "+8.1%", trend: "up" },
+      { label: "Sales Cycle", value: "47 days", change: "-5d", trend: "down" },
+      { label: "Quota Attainment", value: "108%", change: "+8%", trend: "up" },
+    ],
+    pipelineByStage: [
+      { stage: "Prospecting", value: 2100000, deals: 84 },
+      { stage: "Qualification", value: 1800000, deals: 52 },
+      { stage: "Demo/Proposal", value: 1950000, deals: 38 },
+      { stage: "Negotiation", value: 1400000, deals: 22 },
+      { stage: "Closing", value: 1150000, deals: 14 },
+    ],
+    repPerformance: [
+      { name: "Jordan B.", quota: 500000, achieved: 548000, attainment: 109.6, deals: 12 },
+      { name: "Taylor R.", quota: 450000, achieved: 481000, attainment: 106.9, deals: 10 },
+      { name: "Casey M.", quota: 500000, achieved: 412000, attainment: 82.4, deals: 9 },
+      { name: "Morgan P.", quota: 400000, achieved: 438000, attainment: 109.5, deals: 11 },
+      { name: "Riley S.", quota: 450000, achieved: 391000, attainment: 86.9, deals: 8 },
+    ],
+    forecastVsActual: [
+      { month: "Jul", forecast: 1200000, actual: 1280000 },
+      { month: "Aug", forecast: 1350000, actual: 1310000 },
+      { month: "Sep", forecast: 1400000, actual: 1480000 },
+      { month: "Oct", forecast: 1500000, actual: 1620000 },
+      { month: "Nov", forecast: 1600000, actual: 1590000 },
+      { month: "Dec", forecast: 1800000, actual: 1940000 },
+    ],
+  },
+
+  marketing: {
+    kpis: [
+      { label: "MQLs (MTD)", value: "1,284", change: "+18.4%", trend: "up" },
+      { label: "SQLs (MTD)", value: "342", change: "+12.1%", trend: "up" },
+      { label: "CAC", value: "$2,840", change: "-8.2%", trend: "down" },
+      { label: "Website Visitors", value: "84.2K", change: "+22.3%", trend: "up" },
+      { label: "Email Open Rate", value: "28.4%", change: "+2.1%", trend: "up" },
+      { label: "Content Conversions", value: "4.8%", change: "+0.6%", trend: "up" },
+    ],
+    channelPerformance: [
+      { channel: "Organic Search", leads: 428, cost: 12000, cpl: 28 },
+      { channel: "Paid Search", leads: 312, cost: 48000, cpl: 154 },
+      { channel: "Content/Blog", leads: 218, cost: 18000, cpl: 83 },
+      { channel: "Social Media", leads: 184, cost: 22000, cpl: 120 },
+      { channel: "Email", leads: 142, cost: 4000, cpl: 28 },
+      { channel: "Events/Webinars", leads: 98, cost: 35000, cpl: 357 },
+    ],
+    trafficTrend: [
+      { month: "Jul", organic: 28400, paid: 14200, direct: 9800, referral: 6200 },
+      { month: "Aug", organic: 31200, paid: 15800, direct: 10400, referral: 7100 },
+      { month: "Sep", organic: 29800, paid: 16400, direct: 11200, referral: 6800 },
+      { month: "Oct", organic: 34100, paid: 18200, direct: 12100, referral: 7800 },
+      { month: "Nov", organic: 38400, paid: 19800, direct: 13400, referral: 8200 },
+      { month: "Dec", organic: 42100, paid: 21400, direct: 14800, referral: 9100 },
+    ],
+    campaigns: [
+      { name: "Q4 Product Launch", status: "active", budget: 85000, spent: 62000, leads: 284, roi: 3.2 },
+      { name: "Winter Webinar Series", status: "active", budget: 24000, spent: 18000, leads: 142, roi: 4.1 },
+      { name: "Competitor Displacement", status: "active", budget: 45000, spent: 38000, leads: 98, roi: 2.8 },
+      { name: "Enterprise ABM", status: "paused", budget: 120000, spent: 54000, leads: 42, roi: 5.8 },
+    ],
+  },
+};
+
+// ─── Connector Framework Stubs ────────────────────────────────────────────────
+export const connectorStubs = {
+  jira: {
+    name: "Jira REST API",
+    type: "jira_rest",
+    description: "Ingest sprint data, issue counts, velocity, and project status from Jira.",
+    requiredConfig: { base_url: "string", project_key: "string", api_token: "string", email: "string" },
+    status: "not_configured",
+    // TODO: Implement with: GET /rest/api/3/search?jql=project={key}&fields=summary,status,assignee,priority,story_points
+  },
+  github: {
+    name: "GitHub REST API",
+    type: "github_rest",
+    description: "Pull PR counts, commit frequency, deployment events, and contributor stats.",
+    requiredConfig: { org: "string", repo: "string", token: "string" },
+    status: "not_configured",
+    // TODO: Implement with: GET /repos/{org}/{repo}/pulls, /commits, /actions/runs
+  },
+  salesforce: {
+    name: "Salesforce REST API",
+    type: "salesforce_rest",
+    description: "Sync pipeline stages, deal values, rep performance, and forecast data.",
+    requiredConfig: { instance_url: "string", client_id: "string", client_secret: "string" },
+    status: "not_configured",
+    // TODO: Implement with: SOQL queries via /services/data/vXX.0/query
+  },
+  csv_upload: {
+    name: "CSV / JSON Upload",
+    type: "file_upload",
+    description: "Manually upload CSV or JSON files to populate any dashboard tab.",
+    requiredConfig: { allowed_types: ["csv", "json"], max_size_mb: 10 },
+    status: "available",
+    // TODO: Implement with: multipart/form-data upload endpoint + parser
+  },
+  google_analytics: {
+    name: "Google Analytics GA4",
+    type: "ga4_rest",
+    description: "Pull website traffic, conversion funnels, and campaign attribution data.",
+    requiredConfig: { property_id: "string", credentials_json: "string" },
+    status: "not_configured",
+    // TODO: Implement with: Google Analytics Data API v1 (runReport)
+  },
+};
