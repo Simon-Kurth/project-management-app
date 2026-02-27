@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `computed_kpis` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `boardId` varchar(64) NOT NULL,\n  `kpiType` varchar(64) NOT NULL,\n  `data` json NOT NULL,\n  `source` varchar(32) NOT NULL DEFAULT 'jira',\n  `computedAt` timestamp NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `computed_kpis_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2bPN3Ym5yry2NbF.ac51d2272325 --database fQtBjMcGkJgQ5FrhBiqAWp --execute CREATE TABLE IF NOT EXISTS `computed_kpis` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `boardId` varchar(64) NOT NULL,\n  `kpiType` varchar(64) NOT NULL,\n  `data` json NOT NULL,\n  `source` varchar(32) NOT NULL DEFAULT 'jira',\n  `computedAt` timestamp NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT (now()),\n  `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `computed_kpis_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 176
+}

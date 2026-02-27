@@ -66,3 +66,19 @@
 - [x] Database migration applied
 - [x] Demo users seeded
 - [x] Checkpoint saved and published
+
+## Jira Local-First Data Pipeline
+
+- [x] DB schema: jira_snapshots table (raw paginated cache with ETag)
+- [x] DB schema: computed_kpis table (pre-aggregated metrics, keyed by board+type+period)
+- [x] JiraConnector: paginated issue fetcher with ETag/Last-Modified HTTP caching
+- [x] Local aggregation: sprint velocity (story points completed per sprint)
+- [x] Local aggregation: burndown (remaining points per day in sprint)
+- [x] Local aggregation: cycle time (created→done, median/p75/p95)
+- [x] Local aggregation: deployment frequency (releases per week)
+- [x] Local aggregation: bug density and throughput (rolling 8-week window)
+- [x] KPI diff engine: only persist changed fields to DB
+- [x] Scheduler: node-cron job wired into Express server startup
+- [x] Dashboard procedures: delivery + development read from computed_kpis with mock fallback
+- [x] Tests: aggregation engine unit tests with fixture data (18 tests)
+- [x] Checkpoint saved

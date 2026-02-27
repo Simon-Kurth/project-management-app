@@ -2,11 +2,13 @@ import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   auditLogs,
+  computedKpis,
   connectorConfigs,
   InsertUser,
   refreshTokens,
   users,
 } from "../drizzle/schema";
+import type { ComputedDeliveryKPIs } from "./connectors/jira";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -193,6 +195,50 @@ export async function getConnectorConfigs() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(connectorConfigs);
+}
+
+// ─── Computed KPI Helpers (Jira pipeline) ────────────────────────────────────────
+// Stores ONLY pre-aggregated KPI values — never raw Jira issue arrays.
+
+export async function upsertComputedKPIs(entry: {
+  boardId: string;
+  kpiType: string;
+  data: ComputedDeliveryKPIs;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .insert(computedKpis)
+    .values({
+      boardId: entry.boardId,
+      kpiType: entry.kpiType,
+      data: entry.data as unknown as Record<string, unknown>,
+      source: "jira",
+      computedAt: new Date(entry.data.computedAt),
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        data: entry.data as unknown as Record<string, unknown>,
+        computedAt: new Date(entry.data.computedAt),
+        updatedAt: new Date(),
+      },
+    });
+}
+
+export async function getLatestComputedKPIs(
+  boardId: string,
+  kpiType: string
+): Promise<ComputedDeliveryKPIs | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(computedKpis)
+    .where(and(eq(computedKpis.boardId, boardId), eq(computedKpis.kpiType, kpiType)))
+    .orderBy(desc(computedKpis.computedAt))
+    .limit(1);
+  if (!result[0]) return null;
+  return result[0].data as unknown as ComputedDeliveryKPIs;
 }
 
 export async function seedConnectors() {

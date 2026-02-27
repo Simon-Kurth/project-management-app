@@ -15,6 +15,13 @@
       "when": 1772216984650,
       "tag": "0001_loud_shriek",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772221249933,
+      "tag": "0002_fantastic_mad_thinker",
+      "breakpoints": true
     }
   ]
 }
