@@ -24,21 +24,44 @@ import { JiraConnector } from "./connectors/jira";
 import { mockData, connectorStubs } from "./mockData";
 
 // ─── RBAC Helpers ─────────────────────────────────────────────────────────────
+//
+// Role tier map:
+//   executive      → all 9 tabs
+//   admin          → all 9 tabs (same as executive for data access)
+//   company        → all 9 tabs (legacy — kept for backwards compat)
+//   qa             → QA tab only
+//   sales_marketing → Sales + Marketing tabs only
+//   csm            → CSM tab only
 
-const EXECUTIVE_ROLES = ["executive", "company", "admin"] as const;
-const COMPANY_ROLES = ["company", "admin"] as const;
+type AppRole = "user" | "admin" | "executive" | "company" | "qa" | "sales_marketing" | "csm";
 
-function requireExecutive(role: string) {
-  if (!EXECUTIVE_ROLES.includes(role as (typeof EXECUTIVE_ROLES)[number])) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Executive access required" });
+// Tabs each role can access
+const TAB_ACCESS: Record<AppRole, string[]> = {
+  executive:       ["executive-summary", "financials", "delivery", "development", "it-ops", "qa", "csm", "sales", "marketing"],
+  admin:           ["executive-summary", "financials", "delivery", "development", "it-ops", "qa", "csm", "sales", "marketing"],
+  company:         ["executive-summary", "financials", "delivery", "development", "it-ops", "qa", "csm", "sales", "marketing"],
+  qa:              ["qa"],
+  sales_marketing: ["sales", "marketing"],
+  csm:             ["csm"],
+  user:            [],
+};
+
+function canAccess(role: string, tab: string): boolean {
+  return (TAB_ACCESS[role as AppRole] ?? []).includes(tab);
+}
+
+function requireTab(role: string, tab: string) {
+  if (!canAccess(role, tab)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: `Role '${role}' cannot access the '${tab}' tab.` });
   }
 }
 
-function requireCompany(role: string) {
-  if (!COMPANY_ROLES.includes(role as (typeof COMPANY_ROLES)[number])) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Company access required" });
-  }
-}
+// Convenience guards for grouped access
+function requireExecutive(role: string) { requireTab(role, "executive-summary"); }
+function requireQA(role: string)        { requireTab(role, "qa"); }
+function requireCSM(role: string)       { requireTab(role, "csm"); }
+function requireSales(role: string)     { requireTab(role, "sales"); }
+function requireMarketing(role: string) { requireTab(role, "marketing"); }
 
 // ─── App Router ───────────────────────────────────────────────────────────────
 
@@ -205,11 +228,18 @@ export const appRouter = router({
       const execHash = await bcrypt.hash("Executive@2024!", 12);
       const compHash = await bcrypt.hash("Company@2024!", 12);
 
-      await createDemoUser({ email: "executive@demo.com", passwordHash: execHash, name: "Alexandra Chen", role: "executive" });
-      await createDemoUser({ email: "company@demo.com", passwordHash: compHash, name: "Marcus Thompson", role: "company" });
+      const qaHash     = await bcrypt.hash("QA@2024!", 12);
+      const smHash     = await bcrypt.hash("SalesMarketing@2024!", 12);
+      const csmHash    = await bcrypt.hash("CSM@2024!", 12);
+
+      await createDemoUser({ email: "executive@demo.com",     passwordHash: execHash, name: "Alexandra Chen",    role: "executive" });
+      await createDemoUser({ email: "company@demo.com",       passwordHash: compHash, name: "Marcus Thompson",   role: "company" });
+      await createDemoUser({ email: "qa@demo.com",            passwordHash: qaHash,   name: "Jordan Lee",        role: "qa" });
+      await createDemoUser({ email: "salesmarketing@demo.com",passwordHash: smHash,   name: "Taylor Rivera",     role: "sales_marketing" });
+      await createDemoUser({ email: "csm@demo.com",           passwordHash: csmHash,  name: "Casey Morgan",      role: "csm" });
       await seedConnectors();
 
-      return { success: true, message: "Demo users and connectors seeded." };
+      return { success: true, message: "Demo users seeded: executive, company, qa, sales_marketing, csm." };
     }),
   }),
 
@@ -314,25 +344,25 @@ export const appRouter = router({
 
     // ── Company-only tabs ────────────────────────────────────────────────────
     qa: protectedProcedure.query(async ({ ctx }) => {
-      requireCompany(ctx.user.role);
+      requireQA(ctx.user.role);
       await writeAuditLog({ userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, action: "TAB_VIEW", resource: "dashboard", resourceId: "qa" });
       return mockData.qa;
     }),
 
     csm: protectedProcedure.query(async ({ ctx }) => {
-      requireCompany(ctx.user.role);
+      requireCSM(ctx.user.role);
       await writeAuditLog({ userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, action: "TAB_VIEW", resource: "dashboard", resourceId: "csm" });
       return mockData.csm;
     }),
 
     sales: protectedProcedure.query(async ({ ctx }) => {
-      requireCompany(ctx.user.role);
+      requireSales(ctx.user.role);
       await writeAuditLog({ userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, action: "TAB_VIEW", resource: "dashboard", resourceId: "sales" });
       return mockData.sales;
     }),
 
     marketing: protectedProcedure.query(async ({ ctx }) => {
-      requireCompany(ctx.user.role);
+      requireMarketing(ctx.user.role);
       await writeAuditLog({ userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, action: "TAB_VIEW", resource: "dashboard", resourceId: "marketing" });
       return mockData.marketing;
     }),
@@ -341,13 +371,13 @@ export const appRouter = router({
     auditLogs: protectedProcedure
       .input(z.object({ limit: z.number().min(1).max(500).default(100) }))
       .query(async ({ input, ctx }) => {
-        requireCompany(ctx.user.role);
+        requireExecutive(ctx.user.role);
         return getAuditLogs(input.limit);
       }),
 
     // ── Connector configs ────────────────────────────────────────────────────
     connectors: protectedProcedure.query(async ({ ctx }) => {
-      requireCompany(ctx.user.role);
+      requireExecutive(ctx.user.role);
       const dbConfigs = await getConnectorConfigs();
       return { configs: dbConfigs, stubs: connectorStubs };
     }),

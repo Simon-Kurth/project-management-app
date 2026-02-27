@@ -99,7 +99,7 @@ export async function createDemoUser(data: {
   email: string;
   passwordHash: string;
   name: string;
-  role: "executive" | "company";
+  role: "executive" | "company" | "qa" | "sales_marketing" | "csm" | "admin";
 }) {
   const db = await getDb();
   if (!db) return;

@@ -82,3 +82,16 @@
 - [x] Dashboard procedures: delivery + development read from computed_kpis with mock fallback
 - [x] Tests: aggregation engine unit tests with fixture data (18 tests)
 - [x] Checkpoint saved
+
+## RBAC Redesign & Horizontal Layout
+
+- [ ] Update role enum: executive, qa, sales_marketing, csm, admin
+- [ ] Update RBAC tab visibility map per new tiers
+- [ ] Update DB schema migration for new roles
+- [ ] Update seed demo users (one per role)
+- [ ] Update backend RBAC middleware per new roles
+- [ ] Redesign DashboardLayout: replace sidebar with horizontal top tab bar
+- [ ] Top bar: logo + app name left, user profile + logout right
+- [ ] Tab strip: scrollable horizontal, role-filtered, active indicator
+- [ ] Update App.tsx route guards for new roles
+- [ ] Run tests and save checkpoint

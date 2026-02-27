@@ -16,7 +16,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin", "executive", "company"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "executive", "company", "qa", "sales_marketing", "csm"]).default("user").notNull(),
   passwordHash: varchar("passwordHash", { length: 255 }),
   mfaSecret: varchar("mfaSecret", { length: 255 }),
   mfaEnabled: boolean("mfaEnabled").default(false).notNull(),

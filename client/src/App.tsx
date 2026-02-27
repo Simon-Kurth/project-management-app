@@ -4,7 +4,6 @@ import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAuth } from "./_core/hooks/useAuth";
-import { trpc } from "./lib/trpc";
 import { getDemoUser } from "./lib/authStore";
 import DashboardLayout from "./components/DashboardLayout";
 import LoginPage from "./pages/LoginPage";
@@ -20,14 +19,30 @@ import SalesTab from "./pages/tabs/SalesTab";
 import MarketingTab from "./pages/tabs/MarketingTab";
 import NotFound from "./pages/NotFound";
 
+// ─── RBAC access map (mirrors server/routers.ts TAB_ACCESS) ──────────────────
+
+type AppRole = "user" | "admin" | "executive" | "company" | "qa" | "sales_marketing" | "csm";
+
+const TAB_ACCESS: Record<string, AppRole[]> = {
+  "executive-summary": ["executive", "company", "admin"],
+  "financials":        ["executive", "company", "admin"],
+  "delivery":          ["executive", "company", "admin"],
+  "development":       ["executive", "company", "admin"],
+  "it-ops":            ["executive", "company", "admin"],
+  "qa":                ["executive", "company", "admin", "qa"],
+  "csm":               ["executive", "company", "admin", "csm"],
+  "sales":             ["executive", "company", "admin", "sales_marketing"],
+  "marketing":         ["executive", "company", "admin", "sales_marketing"],
+};
+
 // ─── RBAC Route Guard ─────────────────────────────────────────────────────────
 
 function ProtectedRoute({
   children,
-  requiredRoles,
+  tab,
 }: {
   children: React.ReactNode;
-  requiredRoles?: string[];
+  tab?: string;
 }) {
   const { user, loading, isAuthenticated } = useAuth();
   const demoUser = getDemoUser();
@@ -36,8 +51,8 @@ function ProtectedRoute({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center h-screen bg-[#0a0a0f]">
+        <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -46,8 +61,17 @@ function ProtectedRoute({
     return <Redirect to="/login" />;
   }
 
-  if (requiredRoles && effectiveUser && !requiredRoles.includes(effectiveUser.role ?? "")) {
-    return <Redirect to="/dashboard" />;
+  // Check tab-level RBAC
+  if (tab && effectiveUser) {
+    const allowedRoles = TAB_ACCESS[tab] ?? [];
+    const userRole = (effectiveUser.role ?? "user") as AppRole;
+    if (!allowedRoles.includes(userRole)) {
+      // Redirect to the user's first allowed tab
+      const firstAllowed = Object.entries(TAB_ACCESS).find(([, roles]) =>
+        roles.includes(userRole)
+      );
+      return <Redirect to={firstAllowed ? `/dashboard/${firstAllowed[0]}` : "/login"} />;
+    }
   }
 
   return <>{children}</>;
@@ -65,6 +89,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/mfa" component={MfaPage} />
 
+      {/* /dashboard root — DashboardLayout handles redirect to first allowed tab */}
       <Route path="/dashboard">
         <ProtectedRoute>
           <DashboardLayout>
@@ -73,68 +98,57 @@ function Router() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/dashboard/executive-summary">
+        <ProtectedRoute tab="executive-summary">
+          <DashboardLayout><ExecutiveSummaryTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/dashboard/financials">
-        <ProtectedRoute requiredRoles={["executive", "company", "admin"]}>
-          <DashboardLayout>
-            <FinancialsTab />
-          </DashboardLayout>
+        <ProtectedRoute tab="financials">
+          <DashboardLayout><FinancialsTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/dashboard/delivery">
-        <ProtectedRoute requiredRoles={["executive", "company", "admin"]}>
-          <DashboardLayout>
-            <DeliveryTab />
-          </DashboardLayout>
+        <ProtectedRoute tab="delivery">
+          <DashboardLayout><DeliveryTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/dashboard/development">
-        <ProtectedRoute requiredRoles={["executive", "company", "admin"]}>
-          <DashboardLayout>
-            <DevelopmentTab />
-          </DashboardLayout>
+        <ProtectedRoute tab="development">
+          <DashboardLayout><DevelopmentTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/dashboard/itops">
-        <ProtectedRoute requiredRoles={["executive", "company", "admin"]}>
-          <DashboardLayout>
-            <ITOpsTab />
-          </DashboardLayout>
+      <Route path="/dashboard/it-ops">
+        <ProtectedRoute tab="it-ops">
+          <DashboardLayout><ITOpsTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
-      {/* Company-only tabs */}
       <Route path="/dashboard/qa">
-        <ProtectedRoute requiredRoles={["company", "admin"]}>
-          <DashboardLayout>
-            <QATab />
-          </DashboardLayout>
+        <ProtectedRoute tab="qa">
+          <DashboardLayout><QATab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/dashboard/csm">
-        <ProtectedRoute requiredRoles={["company", "admin"]}>
-          <DashboardLayout>
-            <CSMTab />
-          </DashboardLayout>
+        <ProtectedRoute tab="csm">
+          <DashboardLayout><CSMTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/dashboard/sales">
-        <ProtectedRoute requiredRoles={["company", "admin"]}>
-          <DashboardLayout>
-            <SalesTab />
-          </DashboardLayout>
+        <ProtectedRoute tab="sales">
+          <DashboardLayout><SalesTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
       <Route path="/dashboard/marketing">
-        <ProtectedRoute requiredRoles={["company", "admin"]}>
-          <DashboardLayout>
-            <MarketingTab />
-          </DashboardLayout>
+        <ProtectedRoute tab="marketing">
+          <DashboardLayout><MarketingTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 

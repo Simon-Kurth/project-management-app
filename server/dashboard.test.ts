@@ -75,7 +75,7 @@ function makePublicCtx(): TrpcContext {
   };
 }
 
-function makeUserCtx(role: "executive" | "company" | "admin"): TrpcContext {
+function makeUserCtx(role: "executive" | "company" | "admin" | "qa" | "sales_marketing" | "csm"): TrpcContext {
   return {
     user: {
       id: role === "executive" ? 1 : 2,
@@ -178,24 +178,63 @@ describe("dashboard RBAC — Executive role", () => {
     expect(data).toBeDefined();
   });
 
-  it("CANNOT access qa (company-only)", async () => {
+  // Executive now sees ALL 9 tabs
+  it("CAN access qa (executive sees all tabs)", async () => {
     const caller = appRouter.createCaller(makeUserCtx("executive"));
-    await expect(caller.dashboard.qa()).rejects.toThrow("Company access required");
+    const data = await caller.dashboard.qa();
+    expect(data).toBeDefined();
   });
 
-  it("CANNOT access csm (company-only)", async () => {
+  it("CAN access csm (executive sees all tabs)", async () => {
     const caller = appRouter.createCaller(makeUserCtx("executive"));
-    await expect(caller.dashboard.csm()).rejects.toThrow("Company access required");
+    const data = await caller.dashboard.csm();
+    expect(data).toBeDefined();
   });
 
-  it("CANNOT access sales (company-only)", async () => {
+  it("CAN access sales (executive sees all tabs)", async () => {
     const caller = appRouter.createCaller(makeUserCtx("executive"));
-    await expect(caller.dashboard.sales()).rejects.toThrow("Company access required");
+    const data = await caller.dashboard.sales();
+    expect(data).toBeDefined();
   });
 
-  it("CANNOT access marketing (company-only)", async () => {
+  it("CAN access marketing (executive sees all tabs)", async () => {
     const caller = appRouter.createCaller(makeUserCtx("executive"));
-    await expect(caller.dashboard.marketing()).rejects.toThrow("Company access required");
+    const data = await caller.dashboard.marketing();
+    expect(data).toBeDefined();
+  });
+
+  // Granular role checks — QA role can only access QA
+  it("qa role CANNOT access financials", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("qa"));
+    await expect(caller.dashboard.financials()).rejects.toThrow("cannot access");
+  });
+
+  it("qa role CAN access qa tab", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("qa"));
+    const data = await caller.dashboard.qa();
+    expect(data).toBeDefined();
+  });
+
+  it("sales_marketing role CANNOT access financials", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("sales_marketing"));
+    await expect(caller.dashboard.financials()).rejects.toThrow("cannot access");
+  });
+
+  it("sales_marketing role CAN access sales tab", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("sales_marketing"));
+    const data = await caller.dashboard.sales();
+    expect(data).toBeDefined();
+  });
+
+  it("csm role CANNOT access sales tab", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("csm"));
+    await expect(caller.dashboard.sales()).rejects.toThrow("cannot access");
+  });
+
+  it("csm role CAN access csm tab", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("csm"));
+    const data = await caller.dashboard.csm();
+    expect(data).toBeDefined();
   });
 });
 
