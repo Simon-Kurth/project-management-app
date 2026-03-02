@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   auditLogs,
@@ -257,4 +257,50 @@ export async function seedConnectors() {
       .values({ ...stub, isActive: false })
       .onDuplicateKeyUpdate({ set: { connectorType: stub.connectorType } });
   }
+}
+
+// ─── User Management Helpers (Executive-only) ────────────────────────────────
+
+export async function listAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      loginMethod: users.loginMethod,
+      isActive: users.isActive,
+      lastSignedIn: users.lastSignedIn,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .orderBy(desc(users.lastSignedIn));
+}
+
+export async function updateUserRole(
+  targetUserId: number,
+  newRole: "executive" | "company" | "qa" | "sales_marketing" | "csm" | "admin" | "user"
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ role: newRole }).where(eq(users.id, targetUserId));
+}
+
+export async function toggleUserActive(targetUserId: number, isActive: boolean) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ isActive }).where(eq(users.id, targetUserId));
+}
+
+export async function getAuditLogsForUser(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(auditLogs)
+    .where(eq(auditLogs.userId, userId))
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(limit);
 }

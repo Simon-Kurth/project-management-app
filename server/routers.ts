@@ -14,6 +14,10 @@ import {
   getLatestComputedKPIs,
   getUserByEmail,
   getUserById,
+  listAllUsers,
+  updateUserRole,
+  toggleUserActive,
+  getAuditLogsForUser,
   seedConnectors,
   writeAuditLog,
 } from "./db";
@@ -56,6 +60,11 @@ function requireTab(role: string, tab: string) {
 
 // Convenience guards for grouped access
 function requireExecutive(role: string) { requireTab(role, "executive-summary"); }
+function requireUserManagement(role: string) {
+  if (role !== "executive" && role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: `Role '${role}' cannot access user management.` });
+  }
+}
 function requireQA(role: string)        { requireTab(role, "qa"); }
 function requireCSM(role: string)       { requireTab(role, "csm"); }
 function requireSales(role: string)     { requireTab(role, "sales"); }
@@ -336,6 +345,79 @@ export const appRouter = router({
       const dbConfigs = await getConnectorConfigs();
       return { configs: dbConfigs, stubs: connectorStubs };
     }),
+  }),
+
+  // ── User Management (Executive / Admin only) ──────────────────────────────
+  users: router({
+    // List all users with their role, last login, and MFA status
+    list: protectedProcedure.query(async ({ ctx }) => {
+      requireUserManagement(ctx.user.role);
+      const allUsers = await listAllUsers();
+      const duoConfigured = isDuoConfigured();
+      return allUsers.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        loginMethod: u.loginMethod,
+        isActive: u.isActive,
+        lastSignedIn: u.lastSignedIn,
+        createdAt: u.createdAt,
+        // MFA status: if Duo is configured, all password users go through Duo.
+        // If Duo is not configured, MFA is bypassed for everyone.
+        mfaStatus: duoConfigured ? "duo_active" : "bypassed",
+      }));
+    }),
+
+    // Update a user's role (cannot demote yourself)
+    updateRole: protectedProcedure
+      .input(z.object({
+        userId: z.number(),
+        role: z.enum(["executive", "company", "qa", "sales_marketing", "csm", "admin", "user"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        requireUserManagement(ctx.user.role);
+        if (input.userId === ctx.user.id) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot change your own role." });
+        }
+        await updateUserRole(input.userId, input.role);
+        await writeAuditLog({
+          userId: ctx.user.id,
+          userEmail: ctx.user.email ?? undefined,
+          action: "USER_ROLE_CHANGED",
+          resource: "users",
+          resourceId: String(input.userId),
+          metadata: { newRole: input.role },
+        });
+        return { success: true };
+      }),
+
+    // Activate or deactivate a user account
+    toggleActive: protectedProcedure
+      .input(z.object({ userId: z.number(), isActive: z.boolean() }))
+      .mutation(async ({ input, ctx }) => {
+        requireUserManagement(ctx.user.role);
+        if (input.userId === ctx.user.id) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot deactivate your own account." });
+        }
+        await toggleUserActive(input.userId, input.isActive);
+        await writeAuditLog({
+          userId: ctx.user.id,
+          userEmail: ctx.user.email ?? undefined,
+          action: input.isActive ? "USER_ACTIVATED" : "USER_DEACTIVATED",
+          resource: "users",
+          resourceId: String(input.userId),
+        });
+        return { success: true };
+      }),
+
+    // Get the audit trail for a specific user (last 20 actions)
+    auditTrail: protectedProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        requireUserManagement(ctx.user.role);
+        return getAuditLogsForUser(input.userId, 20);
+      }),
   }),
 });
 

@@ -55,6 +55,13 @@ vi.mock("./db", () => ({
   updateUserMfa: vi.fn(async () => {}),
   upsertUser: vi.fn(async () => {}),
   getUserByOpenId: vi.fn(async () => undefined),
+  listAllUsers: vi.fn(async () => [
+    { id: 1, name: "Alexandra Chen", email: "executive@demo.com", role: "executive", loginMethod: "password", isActive: true, lastSignedIn: new Date(), createdAt: new Date() },
+    { id: 2, name: "Marcus Thompson", email: "company@demo.com", role: "company", loginMethod: "password", isActive: true, lastSignedIn: new Date(), createdAt: new Date() },
+  ]),
+  updateUserRole: vi.fn(async () => {}),
+  toggleUserActive: vi.fn(async () => {}),
+  getAuditLogsForUser: vi.fn(async () => []),
 }));
 
 vi.mock("bcryptjs", () => ({
@@ -317,5 +324,52 @@ describe("mock data completeness", () => {
     expect(data.testResults.length).toBeGreaterThan(0);
     expect(data.defectTrend).toBeDefined();
     expect(data.defects).toBeDefined();
+  });
+});
+
+// ─── User Management RBAC Tests ───────────────────────────────────────────────
+
+describe("user management RBAC", () => {
+
+  it("executive CAN call users.list", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("executive"));
+    // Will throw if RBAC blocks it; mock returns empty array if DB not available
+    await expect(caller.users.list()).resolves.toBeDefined();
+  });
+
+  it("company role CANNOT call users.list", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("company"));
+    await expect(caller.users.list()).rejects.toThrow("cannot access user management");
+  });
+
+  it("qa role CANNOT call users.list", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("qa"));
+    await expect(caller.users.list()).rejects.toThrow("cannot access");
+  });
+
+  it("executive CANNOT change their own role", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("executive"));
+    // executive has id=1 in makeUserCtx
+    await expect(caller.users.updateRole({ userId: 1, role: "company" })).rejects.toThrow(
+      "cannot change your own role"
+    );
+  });
+
+  it("executive CAN change another user's role", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("executive"));
+    // userId 2 is a different user
+    await expect(caller.users.updateRole({ userId: 2, role: "qa" })).resolves.toEqual({ success: true });
+  });
+
+  it("executive CANNOT deactivate their own account", async () => {
+    const caller = appRouter.createCaller(makeUserCtx("executive"));
+    await expect(caller.users.toggleActive({ userId: 1, isActive: false })).rejects.toThrow(
+      "cannot deactivate your own account"
+    );
+  });
+
+  it("unauthenticated user CANNOT access users.list", async () => {
+    const caller = appRouter.createCaller(makePublicCtx());
+    await expect(caller.users.list()).rejects.toThrow();
   });
 });

@@ -107,6 +107,13 @@ const ALL_TABS: Tab[] = [
     icon: <Megaphone size={14} />,
     roles: ["executive", "company", "admin", "sales_marketing"],
   },
+  {
+    id: "users",
+    label: "Users",
+    path: "/dashboard/users",
+    icon: <Users size={14} />,
+    roles: ["executive", "admin"],
+  },
 ];
 
 // ─── Role display config ──────────────────────────────────────────────────────

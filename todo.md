@@ -108,3 +108,18 @@
 - [ ] Add DUO_CLIENT_ID, DUO_CLIENT_SECRET, DUO_API_HOST secrets
 - [ ] Update tests for new Duo flow
 - [ ] Checkpoint saved
+
+## User Management Page
+
+- [ ] Backend: listUsers procedure (Executive-only) — id, name, email, role, lastSignedIn, createdAt, mfaStatus
+- [ ] Backend: updateUserRole mutation (Executive-only) — change role with audit log entry
+- [ ] Backend: getUserAuditLog procedure (Executive-only) — last 20 actions for a user
+- [ ] Frontend: UserManagementPage with full-width account table
+- [ ] Frontend: Role badge + inline role change dropdown per row
+- [ ] Frontend: MFA/Duo status column (Active / Bypassed)
+- [ ] Frontend: Last login timestamp column
+- [ ] Frontend: User detail drawer — audit trail for selected user
+- [ ] Route: /dashboard/users (Executive + admin only)
+- [ ] DashboardLayout: Users tab added for executive/admin roles
+- [ ] Tests: user management RBAC tests
+- [ ] Checkpoint saved

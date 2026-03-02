@@ -18,6 +18,7 @@ import QATab from "./pages/tabs/QATab";
 import CSMTab from "./pages/tabs/CSMTab";
 import SalesTab from "./pages/tabs/SalesTab";
 import MarketingTab from "./pages/tabs/MarketingTab";
+import UserManagementTab from "./pages/tabs/UserManagementTab";
 import NotFound from "./pages/NotFound";
 
 // ─── RBAC access map (mirrors server/routers.ts TAB_ACCESS) ──────────────────
@@ -34,6 +35,7 @@ const TAB_ACCESS: Record<string, AppRole[]> = {
   "csm":               ["executive", "company", "admin", "csm"],
   "sales":             ["executive", "company", "admin", "sales_marketing"],
   "marketing":         ["executive", "company", "admin", "sales_marketing"],
+  "users":             ["executive", "admin"],
 };
 
 // ─── RBAC Route Guard ─────────────────────────────────────────────────────────
@@ -151,6 +153,12 @@ function Router() {
       <Route path="/dashboard/marketing">
         <ProtectedRoute tab="marketing">
           <DashboardLayout><MarketingTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/dashboard/users">
+        <ProtectedRoute tab="users">
+          <DashboardLayout><UserManagementTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
