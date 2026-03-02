@@ -6,7 +6,7 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
 } from "recharts";
 
-const CHANNEL_COLORS = ["#6366f1", "#22d3ee", "#f59e0b", "#10b981", "#f43f5e", "#a78bfa"];
+const CHANNEL_COLORS = ["#134C93", "#018365", "#F59E0B", "#018365", "#EF4444", "#2563EB"];
 
 export default function MarketingTab() {
   const { data, isLoading } = trpc.dashboard.marketing.useQuery();
@@ -17,8 +17,8 @@ export default function MarketingTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-foreground">Marketing</h1>
-        <p className="text-sm text-muted-foreground mt-1">Lead generation, channel performance, and campaign analytics</p>
+        <h1 className="text-xl font-bold text-[#141A2B]">Marketing</h1>
+        <p className="text-sm text-[#6E7791] mt-1">Lead generation, channel performance, and campaign analytics</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
@@ -28,7 +28,7 @@ export default function MarketingTab() {
       </div>
 
       {/* Traffic Trend */}
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
         <SectionHeader title="Website Traffic by Source" subtitle="Monthly unique visitors by channel" />
         <ResponsiveContainer width="100%" height={240}>
           <AreaChart data={data.trafficTrend}>
@@ -55,7 +55,7 @@ export default function MarketingTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         {/* Channel Performance */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Channel Performance" subtitle="Leads and cost per lead by channel" />
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data.channelPerformance} layout="vertical">
@@ -71,36 +71,36 @@ export default function MarketingTab() {
         </div>
 
         {/* Campaigns */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Active Campaigns" subtitle="Budget utilization and ROI" />
           <div className="space-y-3">
             {data.campaigns.map((campaign) => {
               const spentPct = Math.round((campaign.spent / campaign.budget) * 100);
               return (
-                <div key={campaign.name} className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                <div key={campaign.name} className="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]/50">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-medium text-foreground">{campaign.name}</p>
+                    <p className="text-sm font-medium text-[#141A2B]">{campaign.name}</p>
                     <StatusBadge status={campaign.status} />
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs mb-2">
                     <div>
-                      <p className="text-muted-foreground">Budget</p>
-                      <p className="font-semibold text-foreground">${(campaign.budget / 1000).toFixed(0)}K</p>
+                      <p className="text-[#6E7791]">Budget</p>
+                      <p className="font-semibold text-[#141A2B]">${(campaign.budget / 1000).toFixed(0)}K</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Leads</p>
-                      <p className="font-semibold text-foreground">{campaign.leads}</p>
+                      <p className="text-[#6E7791]">Leads</p>
+                      <p className="font-semibold text-[#141A2B]">{campaign.leads}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">ROI</p>
+                      <p className="text-[#6E7791]">ROI</p>
                       <p className="font-semibold text-emerald-400">{campaign.roi}x</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-muted rounded-full h-1.5">
+                    <div className="flex-1 bg-[#F0F4F8] rounded-full h-1.5">
                       <div className="h-1.5 rounded-full bg-primary" style={{ width: `${spentPct}%` }} />
                     </div>
-                    <span className="text-xs text-muted-foreground">{spentPct}% spent</span>
+                    <span className="text-xs text-[#6E7791]">{spentPct}% spent</span>
                   </div>
                 </div>
               );
@@ -115,9 +115,9 @@ export default function MarketingTab() {
 function TabSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-8 w-36 bg-muted rounded" />
+      <div className="h-8 w-36 bg-[#F0F4F8] rounded" />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-24 bg-card border border-border rounded-xl" />)}
+        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-24 bg-white border border-[#E2E8F0] rounded-xl shadow-sm" />)}
       </div>
     </div>
   );

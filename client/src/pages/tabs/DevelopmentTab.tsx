@@ -5,7 +5,7 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
-const COLORS = ["#6366f1", "#22d3ee", "#f59e0b", "#10b981", "#f43f5e"];
+const COLORS = ["#134C93", "#018365", "#F59E0B", "#018365", "#EF4444"];
 
 export default function DevelopmentTab() {
   const { data, isLoading } = trpc.dashboard.development.useQuery();
@@ -16,8 +16,8 @@ export default function DevelopmentTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-foreground">Development</h1>
-        <p className="text-sm text-muted-foreground mt-1">Engineering velocity, deployments, and code quality</p>
+        <h1 className="text-xl font-bold text-[#141A2B]">Development</h1>
+        <p className="text-sm text-[#6E7791] mt-1">Engineering velocity, deployments, and code quality</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
@@ -28,7 +28,7 @@ export default function DevelopmentTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         {/* Deployment Frequency */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Deployment Frequency" subtitle="Weekly deployments and rollbacks" />
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data.deploymentFrequency}>
@@ -37,14 +37,14 @@ export default function DevelopmentTab() {
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="deployments" fill="#6366f1" name="Deployments" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="rollbacks" fill="#f43f5e" name="Rollbacks" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="deployments" fill="#134C93" name="Deployments" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="rollbacks" fill="#EF4444" name="Rollbacks" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Sprint Burndown */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Sprint Burndown" subtitle="Remaining vs ideal story points" />
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={data.burndown}>
@@ -53,8 +53,8 @@ export default function DevelopmentTab() {
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="remaining" stroke="#6366f1" strokeWidth={2} name="Remaining" dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="ideal" stroke="#22d3ee" strokeWidth={2} strokeDasharray="4 4" name="Ideal" dot={false} />
+              <Line type="monotone" dataKey="remaining" stroke="#134C93" strokeWidth={2} name="Remaining" dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="ideal" stroke="#018365" strokeWidth={2} strokeDasharray="4 4" name="Ideal" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -62,30 +62,30 @@ export default function DevelopmentTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         {/* Top Contributors */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Top Contributors (30d)" subtitle="Commits, PRs, and code reviews" />
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Engineer</th>
-                  <th className="text-right py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commits</th>
-                  <th className="text-right py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">PRs</th>
-                  <th className="text-right py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reviews</th>
+                <tr className="border-b border-[#E2E8F0]">
+                  <th className="text-left py-2 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Engineer</th>
+                  <th className="text-right py-2 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Commits</th>
+                  <th className="text-right py-2 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">PRs</th>
+                  <th className="text-right py-2 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Reviews</th>
                 </tr>
               </thead>
               <tbody>
                 {data.topContributors.map((c, i) => (
-                  <tr key={c.name} className="border-b border-border/50">
+                  <tr key={c.name} className="border-b border-[#E2E8F0]/50">
                     <td className="py-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
-                        <span className="font-medium text-foreground">{c.name}</span>
+                        <span className="text-xs text-[#6E7791] w-4">{i + 1}</span>
+                        <span className="font-medium text-[#141A2B]">{c.name}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right text-foreground">{c.commits}</td>
-                    <td className="py-2.5 text-right text-foreground">{c.prs}</td>
-                    <td className="py-2.5 text-right text-foreground">{c.reviews}</td>
+                    <td className="py-2.5 text-right text-[#141A2B]">{c.commits}</td>
+                    <td className="py-2.5 text-right text-[#141A2B]">{c.prs}</td>
+                    <td className="py-2.5 text-right text-[#141A2B]">{c.reviews}</td>
                   </tr>
                 ))}
               </tbody>
@@ -94,7 +94,7 @@ export default function DevelopmentTab() {
         </div>
 
         {/* Language Breakdown */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Language Breakdown" subtitle="Codebase composition by language" />
           <div className="flex items-center gap-4">
             <ResponsiveContainer width="50%" height={180}>
@@ -110,9 +110,9 @@ export default function DevelopmentTab() {
                 <div key={lang.language} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                    <span className="text-sm text-foreground">{lang.language}</span>
+                    <span className="text-sm text-[#141A2B]">{lang.language}</span>
                   </div>
-                  <span className="text-sm font-semibold text-foreground">{lang.percentage}%</span>
+                  <span className="text-sm font-semibold text-[#141A2B]">{lang.percentage}%</span>
                 </div>
               ))}
             </div>
@@ -126,13 +126,13 @@ export default function DevelopmentTab() {
 function TabSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-8 w-44 bg-muted rounded" />
+      <div className="h-8 w-44 bg-[#F0F4F8] rounded" />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-24 bg-card border border-border rounded-xl" />)}
+        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-24 bg-white border border-[#E2E8F0] rounded-xl shadow-sm" />)}
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <div className="h-64 bg-card border border-border rounded-xl" />
-        <div className="h-64 bg-card border border-border rounded-xl" />
+        <div className="h-64 bg-white border border-[#E2E8F0] rounded-xl shadow-sm" />
+        <div className="h-64 bg-white border border-[#E2E8F0] rounded-xl shadow-sm" />
       </div>
     </div>
   );

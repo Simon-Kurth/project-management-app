@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   TrendingUp,
   Users,
+  Anchor,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -116,44 +117,40 @@ const ALL_TABS: Tab[] = [
   },
 ];
 
-// ─── Role display config ──────────────────────────────────────────────────────
+// ─── Role display config — Data Oceans light palette ─────────────────────────
 
 const ROLE_CONFIG: Record<AppRole, { label: string; color: string }> = {
-  executive:       { label: "Executive",        color: "bg-violet-500/20 text-violet-300 border-violet-500/30" },
-  company:         { label: "Company",           color: "bg-blue-500/20 text-blue-300 border-blue-500/30" },
-  admin:           { label: "Admin",             color: "bg-amber-500/20 text-amber-300 border-amber-500/30" },
-  qa:              { label: "QA",                color: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" },
-  sales_marketing: { label: "Sales & Marketing", color: "bg-orange-500/20 text-orange-300 border-orange-500/30" },
-  csm:             { label: "CSM",               color: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30" },
-  user:            { label: "User",              color: "bg-zinc-500/20 text-zinc-300 border-zinc-500/30" },
+  executive:       { label: "Executive",        color: "bg-[#134C93]/10 text-[#134C93] border-[#134C93]/25" },
+  company:         { label: "Company",           color: "bg-[#018365]/10 text-[#018365] border-[#018365]/25" },
+  admin:           { label: "Admin",             color: "bg-amber-100 text-amber-700 border-amber-200" },
+  qa:              { label: "QA",                color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  sales_marketing: { label: "Sales & Marketing", color: "bg-orange-50 text-orange-700 border-orange-200" },
+  csm:             { label: "CSM",               color: "bg-cyan-50 text-cyan-700 border-cyan-200" },
+  user:            { label: "User",              color: "bg-gray-100 text-gray-600 border-gray-200" },
 };
 
 // ─── Duo Status Badge ────────────────────────────────────────────────────────
-// Shows a small indicator in the header: green "Duo Active" when Duo is
-// configured and reachable, amber "MFA Bypassed" in dev mode.
-// Polls the duoStatus endpoint once on mount; no auto-refresh needed.
 
 function DuoStatusBadge() {
   const { data } = trpc.auth.duoStatus.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000, // cache for 5 min — no need to hammer the endpoint
+    staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
-  if (!data) return null; // loading — show nothing
+  if (!data) return null;
 
   if (data.ok) {
     return (
-      <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-[10px] font-semibold text-emerald-400">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+      <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#018365]/10 border border-[#018365]/25 text-[10px] font-semibold text-[#018365]">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#018365] animate-pulse" />
         Duo Active
       </span>
     );
   }
 
-  // Duo not configured — show a subtle amber badge in dev mode
   return (
-    <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-medium text-amber-500/70">
-      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
+    <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-medium text-amber-600">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
       MFA Bypassed
     </span>
   );
@@ -228,24 +225,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
+    <div className="min-h-screen bg-[#F0F4F8] flex flex-col">
       {/* ── Top header ─────────────────────────────────────────────────────── */}
-      <header className="h-14 border-b border-white/[0.06] bg-[#0d0d14] flex items-center px-4 gap-3 shrink-0 z-20 sticky top-0">
-        {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
-            <BarChart3 size={14} className="text-white" />
+      <header className="h-14 border-b border-[#E2E8F0] bg-white flex items-center px-4 gap-3 shrink-0 z-20 sticky top-0 shadow-sm">
+
+        {/* Logo — DataOceans logo + "The Wheelhouse" wordmark */}
+        <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0 group">
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
+            alt="DataOceans"
+            className="h-6 w-auto object-contain"
+          />
+          <div className="h-4 w-px bg-[#E2E8F0] hidden sm:block" />
+          <div className="hidden sm:flex items-center gap-1.5">
+            <Anchor size={13} className="text-[#018365]" />
+            <span className="text-sm font-bold text-[#141A2B] tracking-tight">
+              The Wheelhouse
+            </span>
           </div>
-          <span className="text-sm font-semibold text-white tracking-tight hidden sm:block">
-            Exec Dashboard
-          </span>
         </Link>
 
-        <div className="h-5 w-px bg-white/[0.08] shrink-0" />
+        <div className="h-5 w-px bg-[#E2E8F0] shrink-0" />
 
         {/* Horizontal scrollable tab strip */}
         <nav className="flex-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-          <div className="flex items-center gap-0.5 min-w-max h-14">
+          <div className="flex items-end gap-0 min-w-max h-14">
             {visibleTabs.map((tab) => {
               const isActive = tab.id === activeTabId;
               return (
@@ -253,21 +257,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   key={tab.id}
                   href={tab.path}
                   className={cn(
-                    "relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium",
-                    "transition-all duration-150 whitespace-nowrap select-none",
+                    "relative flex items-center gap-1.5 px-3 h-full",
+                    "text-[0.8125rem] font-semibold transition-all duration-150 whitespace-nowrap select-none",
+                    "border-b-2",
                     isActive
-                      ? "bg-white/[0.08] text-white"
-                      : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
+                      ? "text-[#134C93] border-[#134C93]"
+                      : "text-[#6E7791] border-transparent hover:text-[#134C93] hover:border-[#134C93]/30"
                   )}
                 >
-                  <span className={isActive ? "text-violet-400" : "text-zinc-500"}>
+                  <span className={cn(
+                    "transition-colors",
+                    isActive ? "text-[#134C93]" : "text-[#6E7791]"
+                  )}>
                     {tab.icon}
                   </span>
                   {tab.label}
-                  {/* Active underline */}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-violet-500 rounded-full" />
-                  )}
                 </Link>
               );
             })}
@@ -277,6 +281,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Right: Duo status + role badge + profile */}
         <div className="flex items-center gap-2 shrink-0">
           <DuoStatusBadge />
+
           <span
             className={cn(
               "hidden sm:inline-flex items-center px-2 py-0.5 rounded-full",
@@ -291,27 +296,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen((v) => !v)}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-white/[0.06] transition-colors"
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-[#F0F4F8] transition-colors"
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+              <div className="w-7 h-7 rounded-full bg-[#134C93] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
                 {initials}
               </div>
-              <span className="text-xs text-zinc-300 hidden md:block max-w-[120px] truncate">
+              <span className="text-xs text-[#141A2B] font-medium hidden md:block max-w-[120px] truncate">
                 {effectiveUser.name ?? effectiveUser.email}
               </span>
               <ChevronDown
                 size={11}
-                className={cn("text-zinc-500 transition-transform duration-150", profileOpen && "rotate-180")}
+                className={cn("text-[#6E7791] transition-transform duration-150", profileOpen && "rotate-180")}
               />
             </button>
 
             {profileOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-56 bg-[#15151e] border border-white/[0.08] rounded-xl shadow-2xl shadow-black/50 py-1.5 z-50">
-                <div className="px-3 py-2.5 border-b border-white/[0.06]">
-                  <p className="text-xs font-semibold text-white truncate">
+              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white border border-[#E2E8F0] rounded-xl shadow-lg shadow-[#141A2B]/10 py-1.5 z-50">
+                <div className="px-3 py-2.5 border-b border-[#E2E8F0]">
+                  <p className="text-xs font-semibold text-[#141A2B] truncate">
                     {effectiveUser.name ?? "User"}
                   </p>
-                  <p className="text-[11px] text-zinc-500 truncate mt-0.5">
+                  <p className="text-[11px] text-[#6E7791] truncate mt-0.5">
                     {effectiveUser.email}
                   </p>
                   <span
@@ -328,17 +333,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="py-1">
                   <button
                     onClick={() => setProfileOpen(false)}
-                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-[#6E7791] hover:text-[#141A2B] hover:bg-[#F0F4F8] transition-colors"
                   >
                     <Users size={12} />
                     Profile &amp; MFA Settings
                   </button>
                 </div>
 
-                <div className="border-t border-white/[0.06] pt-1">
+                <div className="border-t border-[#E2E8F0] pt-1">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/[0.08] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={12} />
                     Sign out
@@ -350,8 +355,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      {/* Subtle gradient separator */}
-      <div className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent shrink-0" />
+      {/* Blue accent rule below header */}
+      <div className="h-0.5 bg-gradient-to-r from-[#134C93] via-[#018365] to-[#134C93] shrink-0" />
 
       {/* ── Page content ────────────────────────────────────────────────────── */}
       <main className="flex-1 overflow-auto">
@@ -359,6 +364,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-[#E2E8F0] bg-white px-6 py-2.5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
+            alt="DataOceans"
+            className="h-4 w-auto object-contain opacity-60"
+          />
+          <span className="text-[10px] text-[#6E7791]">The Wheelhouse</span>
+        </div>
+        <span className="text-[10px] text-[#6E7791]">
+          © {new Date().getFullYear()} DataOceans · Internal Use Only
+        </span>
+      </footer>
     </div>
   );
 }

@@ -21,8 +21,8 @@ export default function ITOpsTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-foreground">IT / Ops</h1>
-        <p className="text-sm text-muted-foreground mt-1">Infrastructure health, incidents, and resource utilization</p>
+        <h1 className="text-xl font-bold text-[#141A2B]">IT / Ops</h1>
+        <p className="text-sm text-[#6E7791] mt-1">Infrastructure health, incidents, and resource utilization</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
@@ -33,18 +33,18 @@ export default function ITOpsTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         {/* Service Status */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Service Status" subtitle="Real-time system health" />
           <div className="space-y-2">
             {data.serviceStatus.map((svc) => (
-              <div key={svc.service} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+              <div key={svc.service} className="flex items-center justify-between py-2.5 border-b border-[#E2E8F0]/50 last:border-0">
                 <div className="flex items-center gap-2.5">
                   <ServiceDot status={svc.status} />
-                  <span className="text-sm text-foreground">{svc.service}</span>
+                  <span className="text-sm text-[#141A2B]">{svc.service}</span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-xs text-muted-foreground">{svc.uptime}% uptime</span>
-                  {svc.latency > 0 && <span className="text-xs text-muted-foreground">{svc.latency}ms</span>}
+                  <span className="text-xs text-[#6E7791]">{svc.uptime}% uptime</span>
+                  {svc.latency > 0 && <span className="text-xs text-[#6E7791]">{svc.latency}ms</span>}
                   <StatusBadge status={svc.status} />
                 </div>
               </div>
@@ -53,18 +53,18 @@ export default function ITOpsTab() {
         </div>
 
         {/* Resource Utilization */}
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
           <SectionHeader title="Resource Utilization" subtitle="CPU, memory, and network (24h)" />
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={data.resourceUtilization}>
               <defs>
                 <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#134C93" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#134C93" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="memGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#018365" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#018365" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" />
@@ -72,42 +72,42 @@ export default function ITOpsTab() {
               <YAxis tick={{ fontSize: 11 }} unit="%" domain={[0, 100]} />
               <Tooltip formatter={(v: number) => [`${v}%`]} />
               <Legend />
-              <Area type="monotone" dataKey="cpu" stroke="#6366f1" fill="url(#cpuGrad)" strokeWidth={2} name="CPU" />
-              <Area type="monotone" dataKey="memory" stroke="#22d3ee" fill="url(#memGrad)" strokeWidth={2} name="Memory" />
-              <Area type="monotone" dataKey="network" stroke="#f59e0b" fill="none" strokeWidth={2} strokeDasharray="4 4" name="Network" />
+              <Area type="monotone" dataKey="cpu" stroke="#134C93" fill="url(#cpuGrad)" strokeWidth={2} name="CPU" />
+              <Area type="monotone" dataKey="memory" stroke="#018365" fill="url(#memGrad)" strokeWidth={2} name="Memory" />
+              <Area type="monotone" dataKey="network" stroke="#F59E0B" fill="none" strokeWidth={2} strokeDasharray="4 4" name="Network" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Incidents */}
-      <div className="bg-card border border-border rounded-xl p-5">
+      <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-sm p-5">
         <SectionHeader title="Recent Incidents" subtitle="Last 7 days" />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">ID</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Severity</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Opened</th>
-                <th className="text-left py-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Assignee</th>
+              <tr className="border-b border-[#E2E8F0]">
+                <th className="text-left py-2 px-3 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">ID</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Title</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Severity</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Status</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Opened</th>
+                <th className="text-left py-2 px-3 text-xs font-semibold text-[#6E7791] uppercase tracking-wider">Assignee</th>
               </tr>
             </thead>
             <tbody>
               {data.incidents.map((inc) => (
-                <tr key={inc.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="py-3 px-3 font-mono text-xs text-muted-foreground">{inc.id}</td>
-                  <td className="py-3 px-3 text-foreground">{inc.title}</td>
+                <tr key={inc.id} className="border-b border-[#E2E8F0]/50 hover:bg-[#F0F4F8]/20 transition-colors">
+                  <td className="py-3 px-3 font-mono text-xs text-[#6E7791]">{inc.id}</td>
+                  <td className="py-3 px-3 text-[#141A2B]">{inc.title}</td>
                   <td className="py-3 px-3">
                     <span className={cn("text-xs font-semibold", inc.severity === "P1" ? "text-rose-400" : inc.severity === "P2" ? "text-amber-400" : "text-slate-400")}>
                       {inc.severity}
                     </span>
                   </td>
                   <td className="py-3 px-3"><StatusBadge status={inc.status} /></td>
-                  <td className="py-3 px-3 text-xs text-muted-foreground">{inc.opened}</td>
-                  <td className="py-3 px-3 text-xs text-foreground">{inc.assignee}</td>
+                  <td className="py-3 px-3 text-xs text-[#6E7791]">{inc.opened}</td>
+                  <td className="py-3 px-3 text-xs text-[#141A2B]">{inc.assignee}</td>
                 </tr>
               ))}
             </tbody>
@@ -121,9 +121,9 @@ export default function ITOpsTab() {
 function TabSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-8 w-32 bg-muted rounded" />
+      <div className="h-8 w-32 bg-[#F0F4F8] rounded" />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-24 bg-card border border-border rounded-xl" />)}
+        {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-24 bg-white border border-[#E2E8F0] rounded-xl shadow-sm" />)}
       </div>
     </div>
   );
