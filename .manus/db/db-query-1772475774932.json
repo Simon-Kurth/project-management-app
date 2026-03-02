@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `duo_state_store` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`state` varchar(128) NOT NULL,\n\t`username` varchar(320) NOT NULL,\n\t`userId` int NOT NULL,\n\t`expiresAt` timestamp NOT NULL,\n\t`used` boolean NOT NULL DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `duo_state_store_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `duo_state_store_state_unique` UNIQUE(`state`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2bPN3Ym5yry2NbF.ac51d2272325 --database fQtBjMcGkJgQ5FrhBiqAWp --execute CREATE TABLE `duo_state_store` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`state` varchar(128) NOT NULL,\n\t`username` varchar(320) NOT NULL,\n\t`userId` int NOT NULL,\n\t`expiresAt` timestamp NOT NULL,\n\t`used` boolean NOT NULL DEFAULT false,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `duo_state_store_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `duo_state_store_state_unique` UNIQUE(`state`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 380
+}

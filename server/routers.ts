@@ -1,8 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import * as OTPAuth from "otpauth";
-import QRCode from "qrcode";
 import { z } from "zod";
+import { initiateDuoAuth, completeDuoCallback, isDuoConfigured, duoHealthCheck } from "./duo";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -16,7 +15,6 @@ import {
   getUserByEmail,
   getUserById,
   seedConnectors,
-  updateUserMfa,
   writeAuditLog,
 } from "./db";
 import { runJiraSync } from "./scheduler";
@@ -97,69 +95,26 @@ export const appRouter = router({
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid credentials" });
         }
 
-        // If MFA is enabled and verified, require TOTP step
-        if (user.mfaEnabled && user.mfaVerified) {
-          await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_MFA_REQUIRED", resource: "auth", ipAddress: ip, userAgent: ua });
+        // ── Duo Universal Prompt MFA ──────────────────────────────────────────
+        // If Duo is configured, always require Duo 2FA after password validation.
+        // If Duo is NOT configured (dev/test), skip MFA and create session directly.
+        if (isDuoConfigured()) {
+          await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_DUO_INITIATED", resource: "auth", ipAddress: ip, userAgent: ua });
+
+          // Generate Duo auth URL — stores state in DB for CSRF validation
+          const duoAuthUrl = await initiateDuoAuth(user.id, user.email ?? user.openId);
+
           return {
-            requiresMfa: true,
+            requiresDuo: true,
+            duoAuthUrl,
             userId: user.id,
             user: null,
           };
         }
 
+        // Duo not configured — create session directly (dev/test mode)
         await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_SUCCESS", resource: "auth", ipAddress: ip, userAgent: ua });
 
-        // Create a signed session cookie so protectedProcedure can authenticate subsequent requests
-        const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name ?? user.email ?? "" });
-        const cookieOptions = getSessionCookieOptions(ctx.req);
-        ctx.res.cookie(COOKIE_NAME, sessionToken, {
-          ...cookieOptions,
-          maxAge: 8 * 60 * 60 * 1000, // 8 hours
-        });
-
-        return {
-          requiresMfa: false,
-          userId: user.id,
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            mfaEnabled: user.mfaEnabled,
-          },
-        };
-      }),
-
-    // Verify TOTP code during login
-    verifyMfaLogin: publicProcedure
-      .input(z.object({ userId: z.number(), code: z.string().length(6) }))
-      .mutation(async ({ input, ctx }) => {
-        const ip = ctx.req.headers["x-forwarded-for"]?.toString() || "unknown";
-        const ua = ctx.req.headers["user-agent"] || "unknown";
-
-        const user = await getUserById(input.userId);
-        if (!user || !user.mfaSecret) {
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid session" });
-        }
-
-        const totp = new OTPAuth.TOTP({
-          issuer: "ExecDashboard",
-          label: user.email ?? "user",
-          algorithm: "SHA1",
-          digits: 6,
-          period: 30,
-          secret: OTPAuth.Secret.fromBase32(user.mfaSecret),
-        });
-
-        const delta = totp.validate({ token: input.code, window: 1 });
-        if (delta === null) {
-          await writeAuditLog({ userId: user.id, action: "MFA_VERIFY_FAILED", resource: "auth", ipAddress: ip, userAgent: ua });
-          throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid MFA code" });
-        }
-
-        await writeAuditLog({ userId: user.id, action: "LOGIN_SUCCESS_MFA", resource: "auth", ipAddress: ip, userAgent: ua });
-
-        // Create signed session cookie after successful MFA
         const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name ?? user.email ?? "" });
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, {
@@ -168,57 +123,57 @@ export const appRouter = router({
         });
 
         return {
-          user: { id: user.id, email: user.email, name: user.name, role: user.role, mfaEnabled: user.mfaEnabled },
+          requiresDuo: false,
+          duoAuthUrl: null,
+          userId: user.id,
+          user: { id: user.id, email: user.email, name: user.name, role: user.role },
         };
       }),
 
-    // Generate MFA secret and QR code for enrollment
-    setupMfa: protectedProcedure.mutation(async ({ ctx }) => {
-      const secret = new OTPAuth.Secret({ size: 20 });
-      const totp = new OTPAuth.TOTP({
-        issuer: "ExecDashboard",
-        label: ctx.user.email ?? "user",
-        algorithm: "SHA1",
-        digits: 6,
-        period: 30,
-        secret,
-      });
-
-      await updateUserMfa(ctx.user.id, { mfaSecret: secret.base32, mfaEnabled: false, mfaVerified: false });
-
-      const qrCodeUrl = await QRCode.toDataURL(totp.toString());
-      return { qrCodeUrl, secret: secret.base32 };
-    }),
-
-    // Confirm MFA enrollment with a valid TOTP code
-    confirmMfa: protectedProcedure
-      .input(z.object({ code: z.string().length(6) }))
+    // ── Duo Callback ─────────────────────────────────────────────────────────
+    // Called by the frontend after Duo redirects back to /duo-callback.
+    // Validates the state token, exchanges the duo_code, and creates a session.
+    duoCallback: publicProcedure
+      .input(z.object({
+        state:   z.string().min(1),
+        duoCode: z.string().min(1),
+      }))
       .mutation(async ({ input, ctx }) => {
-        const user = await getUserById(ctx.user.id);
-        if (!user?.mfaSecret) throw new TRPCError({ code: "BAD_REQUEST", message: "MFA not set up" });
+        const ip = ctx.req.headers["x-forwarded-for"]?.toString() || "unknown";
+        const ua = ctx.req.headers["user-agent"] || "unknown";
 
-        const totp = new OTPAuth.TOTP({
-          issuer: "ExecDashboard",
-          label: user.email ?? "user",
-          algorithm: "SHA1",
-          digits: 6,
-          period: 30,
-          secret: OTPAuth.Secret.fromBase32(user.mfaSecret),
+        let callbackResult;
+        try {
+          callbackResult = await completeDuoCallback(input.state, input.duoCode);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : "Duo verification failed";
+          await writeAuditLog({ action: "DUO_CALLBACK_FAILED", resource: "auth", ipAddress: ip, userAgent: ua, metadata: { error: msg } });
+          throw new TRPCError({ code: "UNAUTHORIZED", message: msg });
+        }
+
+        const user = await getUserById(callbackResult.userId);
+        if (!user || !user.isActive) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "User not found or inactive" });
+        }
+
+        await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_SUCCESS_DUO", resource: "auth", ipAddress: ip, userAgent: ua });
+
+        // Create signed session cookie
+        const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name ?? user.email ?? "" });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, {
+          ...cookieOptions,
+          maxAge: 8 * 60 * 60 * 1000,
         });
 
-        const delta = totp.validate({ token: input.code, window: 1 });
-        if (delta === null) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid code" });
-
-        await updateUserMfa(ctx.user.id, { mfaEnabled: true, mfaVerified: true });
-        await writeAuditLog({ userId: ctx.user.id, action: "MFA_ENABLED", resource: "auth" });
-        return { success: true };
+        return {
+          user: { id: user.id, email: user.email, name: user.name, role: user.role },
+        };
       }),
 
-    // Disable MFA
-    disableMfa: protectedProcedure.mutation(async ({ ctx }) => {
-      await updateUserMfa(ctx.user.id, { mfaEnabled: false, mfaVerified: false, mfaSecret: undefined });
-      await writeAuditLog({ userId: ctx.user.id, action: "MFA_DISABLED", resource: "auth" });
-      return { success: true };
+    // ── Duo Health Check ─────────────────────────────────────────────────────
+    duoStatus: publicProcedure.query(async () => {
+      return await duoHealthCheck();
     }),
   }),
 

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { setDemoUser, setPendingMfaUserId } from "@/lib/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,11 +19,12 @@ export default function LoginPage() {
   const utils = trpc.useUtils();
   const loginMutation = trpc.auth.loginWithPassword.useMutation({
     onSuccess: async (data) => {
-      if (data.requiresMfa) {
-        setPendingMfaUserId(data.userId);
-        navigate("/mfa");
+      if (data.requiresDuo && data.duoAuthUrl) {
+        // Duo is configured — redirect browser to Duo Universal Prompt
+        // The Duo prompt will redirect back to /duo-callback?state=...&duo_code=...
+        window.location.href = data.duoAuthUrl;
       } else if (data.user) {
-        // Session cookie is now set by the server — invalidate auth cache and navigate
+        // Duo not configured (dev mode) — session cookie already set
         await utils.auth.me.invalidate();
         navigate("/dashboard");
       }
@@ -50,6 +50,13 @@ export default function LoginPage() {
     loginMutation.mutate({ email, password });
   };
 
+  const demoUsers = [
+    { label: "Executive", desc: "All 9 tabs", email: "executive@demo.com", password: "Executive@2024!" },
+    { label: "QA",        desc: "QA tab only",        email: "qa@demo.com",            password: "QA@2024!" },
+    { label: "Sales & Marketing", desc: "Sales + Marketing", email: "salesmarketing@demo.com", password: "SalesMarketing@2024!" },
+    { label: "CSM",       desc: "CSM tab only",       email: "csm@demo.com",           password: "CSM@2024!" },
+  ];
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -68,7 +75,11 @@ export default function LoginPage() {
         <div className="bg-card border border-border rounded-2xl p-8 shadow-2xl">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-foreground">Sign in</h2>
-            <p className="text-sm text-muted-foreground mt-1">Access your dashboard securely</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Access your dashboard securely
+              {" · "}
+              <span className="text-violet-400 font-medium">Protected by Duo MFA</span>
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -108,10 +119,13 @@ export default function LoginPage() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing in...
+                  {loading ? "Redirecting to Duo…" : "Signing in…"}
                 </span>
               ) : (
-                "Sign in"
+                <span className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Sign in with Duo MFA
+                </span>
               )}
             </Button>
           </form>
@@ -133,27 +147,31 @@ export default function LoginPage() {
 
           {/* Demo credentials */}
           <div className="mt-6 p-4 rounded-lg bg-muted/30 border border-border/50">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Demo Credentials</p>
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => { setEmail("executive@demo.com"); setPassword("Executive@2024!"); }}
-                className="w-full text-left p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <p className="text-xs font-medium text-foreground">Executive Role</p>
-                <p className="text-xs text-muted-foreground">executive@demo.com — 5 tabs</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => { setEmail("company@demo.com"); setPassword("Company@2024!"); }}
-                className="w-full text-left p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <p className="text-xs font-medium text-foreground">Company Role</p>
-                <p className="text-xs text-muted-foreground">company@demo.com — all 9 tabs</p>
-              </button>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Demo Credentials
+              <span className="ml-2 normal-case font-normal text-amber-500/80">(Duo bypassed in dev mode)</span>
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {demoUsers.map((u) => (
+                <button
+                  key={u.email}
+                  type="button"
+                  onClick={() => { setEmail(u.email); setPassword(u.password); }}
+                  className="text-left p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                >
+                  <p className="text-xs font-medium text-foreground">{u.label}</p>
+                  <p className="text-xs text-muted-foreground">{u.desc}</p>
+                </button>
+              ))}
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Two-factor authentication powered by{" "}
+          <span className="text-green-400 font-medium">Duo Security</span>
+        </p>
       </div>
     </div>
   );

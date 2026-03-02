@@ -121,6 +121,37 @@ const ROLE_CONFIG: Record<AppRole, { label: string; color: string }> = {
   user:            { label: "User",              color: "bg-zinc-500/20 text-zinc-300 border-zinc-500/30" },
 };
 
+// ─── Duo Status Badge ────────────────────────────────────────────────────────
+// Shows a small indicator in the header: green "Duo Active" when Duo is
+// configured and reachable, amber "MFA Bypassed" in dev mode.
+// Polls the duoStatus endpoint once on mount; no auto-refresh needed.
+
+function DuoStatusBadge() {
+  const { data } = trpc.auth.duoStatus.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000, // cache for 5 min — no need to hammer the endpoint
+    retry: false,
+  });
+
+  if (!data) return null; // loading — show nothing
+
+  if (data.ok) {
+    return (
+      <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-[10px] font-semibold text-emerald-400">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        Duo Active
+      </span>
+    );
+  }
+
+  // Duo not configured — show a subtle amber badge in dev mode
+  return (
+    <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-medium text-amber-500/70">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
+      MFA Bypassed
+    </span>
+  );
+}
+
 // ─── DashboardLayout ──────────────────────────────────────────────────────────
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -236,8 +267,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </nav>
 
-        {/* Right: role badge + profile */}
+        {/* Right: Duo status + role badge + profile */}
         <div className="flex items-center gap-2 shrink-0">
+          <DuoStatusBadge />
           <span
             className={cn(
               "hidden sm:inline-flex items-center px-2 py-0.5 rounded-full",

@@ -8,6 +8,7 @@ import { getDemoUser } from "./lib/authStore";
 import DashboardLayout from "./components/DashboardLayout";
 import LoginPage from "./pages/LoginPage";
 import MfaPage from "./pages/MfaPage";
+import DuoCallbackPage from "./pages/DuoCallbackPage";
 import ExecutiveSummaryTab from "./pages/tabs/ExecutiveSummaryTab";
 import FinancialsTab from "./pages/tabs/FinancialsTab";
 import DeliveryTab from "./pages/tabs/DeliveryTab";
@@ -88,6 +89,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginPage} />
       <Route path="/mfa" component={MfaPage} />
+      <Route path="/duo-callback" component={DuoCallbackPage} />
 
       {/* /dashboard root — DashboardLayout handles redirect to first allowed tab */}
       <Route path="/dashboard">

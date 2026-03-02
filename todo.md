@@ -95,3 +95,16 @@
 - [ ] Tab strip: scrollable horizontal, role-filtered, active indicator
 - [ ] Update App.tsx route guards for new roles
 - [ ] Run tests and save checkpoint
+
+## Duo Universal Prompt MFA Integration
+- [ ] Install @duosecurity/duo_universal package
+- [ ] Add duo_state_store table to DB schema (state + username + expiry for CSRF protection)
+- [ ] Build server-side Duo OIDC flow: initiateDuo, duoCallback procedures
+- [ ] Remove old TOTP setupMfa/confirmMfa procedures
+- [ ] Update loginWithPassword to redirect to Duo instead of TOTP
+- [ ] Build DuoCallbackPage frontend component to handle the redirect back
+- [ ] Update MfaPage to show "Redirecting to Duo..." loading state
+- [ ] Update App.tsx with /duo-callback route
+- [ ] Add DUO_CLIENT_ID, DUO_CLIENT_SECRET, DUO_API_HOST secrets
+- [ ] Update tests for new Duo flow
+- [ ] Checkpoint saved

@@ -29,6 +29,13 @@
       "when": 1772224045996,
       "tag": "0003_flowery_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1772475764716,
+      "tag": "0004_common_kid_colt",
+      "breakpoints": true
     }
   ]
 }

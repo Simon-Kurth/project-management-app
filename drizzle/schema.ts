@@ -100,3 +100,18 @@ export const computedKpis = mysqlTable("computed_kpis", {
 
 export type ComputedKpi = typeof computedKpis.$inferSelect;
 export type InsertComputedKpi = typeof computedKpis.$inferInsert;
+
+// ─── Duo State Store ──────────────────────────────────────────────────────────
+// Short-lived CSRF state tokens for the Duo Universal Prompt OIDC flow.
+// Each row is created when the user is redirected to Duo and consumed on callback.
+export const duoStateStore = mysqlTable("duo_state_store", {
+  id: int("id").autoincrement().primaryKey(),
+  state: varchar("state", { length: 128 }).notNull().unique(),
+  username: varchar("username", { length: 320 }).notNull(), // email used as Duo username
+  userId: int("userId").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type DuoState = typeof duoStateStore.$inferSelect;

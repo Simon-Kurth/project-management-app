@@ -4,6 +4,14 @@ import type { TrpcContext } from "./_core/context";
 
 // ─── Mock DB helpers ──────────────────────────────────────────────────────────
 
+// Mock Duo so tests don't need real Duo credentials — isDuoConfigured returns false in test env
+vi.mock("./duo", () => ({
+  isDuoConfigured: vi.fn(() => false),
+  initiateDuoAuth: vi.fn(async () => "https://duo.example.com/auth"),
+  completeDuoCallback: vi.fn(async () => ({ userId: 1, username: "executive@demo.com" })),
+  duoHealthCheck: vi.fn(async () => ({ ok: true, message: "Duo servers reachable" })),
+}));
+
 vi.mock("./db", () => ({
   getUserByEmail: vi.fn(async (email: string) => {
     if (email === "executive@demo.com") {
@@ -96,24 +104,25 @@ function makeUserCtx(role: "executive" | "company" | "admin" | "qa" | "sales_mar
 // ─── Auth Tests ───────────────────────────────────────────────────────────────
 
 describe("auth.loginWithPassword", () => {
-  it("returns user data for valid executive credentials", async () => {
+  it("returns user data for valid executive credentials (Duo bypassed in test)", async () => {
     const caller = appRouter.createCaller(makePublicCtx());
     const result = await caller.auth.loginWithPassword({
       email: "executive@demo.com",
       password: "Executive@2024!",
     });
-    expect(result.requiresMfa).toBe(false);
+    // Duo not configured in test env — session created directly
+    expect(result.requiresDuo).toBe(false);
     expect(result.user?.role).toBe("executive");
     expect(result.user?.email).toBe("executive@demo.com");
   });
 
-  it("returns user data for valid company credentials", async () => {
+  it("returns user data for valid company credentials (Duo bypassed in test)", async () => {
     const caller = appRouter.createCaller(makePublicCtx());
     const result = await caller.auth.loginWithPassword({
       email: "company@demo.com",
       password: "Company@2024!",
     });
-    expect(result.requiresMfa).toBe(false);
+    expect(result.requiresDuo).toBe(false);
     expect(result.user?.role).toBe("company");
   });
 
