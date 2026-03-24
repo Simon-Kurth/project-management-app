@@ -21,6 +21,10 @@ export const users = mysqlTable("users", {
   mfaSecret: varchar("mfaSecret", { length: 255 }),
   mfaEnabled: boolean("mfaEnabled").default(false).notNull(),
   mfaVerified: boolean("mfaVerified").default(false).notNull(),
+  // Entra ID (Azure AD) SSO fields
+  entraOid: varchar("entraOid", { length: 128 }),        // Entra object ID (immutable)
+  entraUpn: varchar("entraUpn", { length: 320 }),        // user@company.com
+  entraTenantId: varchar("entraTenantId", { length: 128 }), // Entra tenant GUID
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -115,3 +119,18 @@ export const duoStateStore = mysqlTable("duo_state_store", {
 });
 
 export type DuoState = typeof duoStateStore.$inferSelect;
+
+// ─── Pending Auth Store ───────────────────────────────────────────────────────
+// Holds the Entra-authenticated user identity between Entra callback and Duo
+// callback. Consumed once Duo verification succeeds.
+export const pendingAuthStore = mysqlTable("pending_auth_store", {
+  id: int("id").autoincrement().primaryKey(),
+  token: varchar("token", { length: 128 }).notNull().unique(), // random CSRF token
+  userId: int("userId").notNull(),
+  username: varchar("username", { length: 320 }).notNull(),   // UPN / email for Duo
+  expiresAt: timestamp("expiresAt").notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type PendingAuth = typeof pendingAuthStore.$inferSelect;

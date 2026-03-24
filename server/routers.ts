@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { initiateDuoAuth, completeDuoCallback, isDuoConfigured, duoHealthCheck } from "./duo";
+import { isEntraConfigured } from "./entra";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -183,6 +184,16 @@ export const appRouter = router({
     // ── Duo Health Check ─────────────────────────────────────────────────────
     duoStatus: publicProcedure.query(async () => {
       return await duoHealthCheck();
+    }),
+
+    // ── Entra ID Status ──────────────────────────────────────────────────────
+    // Returns whether Entra SSO is configured so the frontend can show/hide
+    // the "Sign in with Microsoft" button vs. the password form.
+    entraStatus: publicProcedure.query(() => {
+      return {
+        configured: isEntraConfigured(),
+        loginUrl: "/api/auth/entra/login",
+      };
     }),
   }),
 

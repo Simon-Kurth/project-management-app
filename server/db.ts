@@ -4,7 +4,9 @@ import {
   auditLogs,
   computedKpis,
   connectorConfigs,
+  duoStateStore,
   InsertUser,
+  pendingAuthStore,
   refreshTokens,
   users,
 } from "../drizzle/schema";
@@ -303,4 +305,121 @@ export async function getAuditLogsForUser(userId: number, limit = 20) {
     .where(eq(auditLogs.userId, userId))
     .orderBy(desc(auditLogs.createdAt))
     .limit(limit);
+}
+
+// ─── Entra ID User Helpers ────────────────────────────────────────────────────
+
+/**
+ * Find a user by their Entra Object ID (immutable, used as primary SSO key).
+ */
+export async function getUserByEntraOid(entraOid: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.entraOid, entraOid))
+    .limit(1);
+  return result[0];
+}
+
+/**
+ * Provision or update a user record from Entra ID claims.
+ * On first login: creates the user with the mapped role.
+ * On subsequent logins: updates UPN, name, and lastSignedIn.
+ */
+export async function upsertEntraUser(params: {
+  entraOid: string;
+  entraUpn: string;
+  entraTenantId: string;
+  name: string;
+  email: string;
+  role: string;
+}): Promise<{ id: number; openId: string; role: string; name: string | null; email: string | null; isActive: boolean }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Use entraOid as the stable openId for Manus session tokens
+  const openId = `entra_${params.entraOid}`;
+
+  await db
+    .insert(users)
+    .values({
+      openId,
+      entraOid: params.entraOid,
+      entraUpn: params.entraUpn,
+      entraTenantId: params.entraTenantId,
+      name: params.name,
+      email: params.email.toLowerCase(),
+      role: params.role as InsertUser["role"],
+      loginMethod: "entra",
+      isActive: true,
+      lastSignedIn: new Date(),
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        entraUpn: params.entraUpn,
+        name: params.name,
+        email: params.email.toLowerCase(),
+        loginMethod: "entra",
+        lastSignedIn: new Date(),
+        // NOTE: role is NOT updated on login — admins manage roles via User Management page
+      },
+    });
+
+  // Fetch the freshly upserted row
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
+
+  if (!result[0]) throw new Error("Failed to upsert Entra user");
+  return result[0];
+}
+
+// ─── Pending Auth Store Helpers ───────────────────────────────────────────────
+// Used to hold Entra-authenticated identity between Entra callback and Duo callback.
+
+export async function createPendingAuth(params: {
+  token: string;
+  userId: number;
+  username: string;
+  expiresAt: Date;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(pendingAuthStore).values(params);
+}
+
+export async function consumePendingAuth(token: string): Promise<{ userId: number; username: string } | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select()
+    .from(pendingAuthStore)
+    .where(
+      and(
+        eq(pendingAuthStore.token, token),
+        eq(pendingAuthStore.used, false),
+      )
+    )
+    .limit(1);
+
+  const row = result[0];
+  if (!row) return null;
+
+  // Check expiry
+  if (row.expiresAt < new Date()) {
+    return null;
+  }
+
+  // Mark as used (one-time token)
+  await db
+    .update(pendingAuthStore)
+    .set({ used: true })
+    .where(eq(pendingAuthStore.id, row.id));
+
+  return { userId: row.userId, username: row.username };
 }

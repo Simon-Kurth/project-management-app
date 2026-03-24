@@ -1,20 +1,49 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Anchor, Lock, Mail, Shield } from "lucide-react";
+import { AlertCircle, Anchor, Lock, Mail, Shield } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 
+// Microsoft logo SVG (official brand colours)
+function MicrosoftLogo() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+      <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+      <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
+      <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const [, navigate] = useLocation();
+  const search = useSearch();
   const { isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [ssoLoading, setSsoLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Read error from query string (set by Entra/Duo callback on failure)
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const err = params.get("error");
+    if (err) {
+      setErrorMsg(decodeURIComponent(err));
+    }
+  }, [search]);
+
+  // Query whether Entra SSO is configured on this server
+  const { data: entraStatus } = trpc.auth.entraStatus.useQuery(undefined, {
+    staleTime: Infinity, // config doesn't change at runtime
+  });
 
   const utils = trpc.useUtils();
   const loginMutation = trpc.auth.loginWithPassword.useMutation({
@@ -37,7 +66,7 @@ export default function LoginPage() {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Please enter email and password");
@@ -47,12 +76,21 @@ export default function LoginPage() {
     loginMutation.mutate({ email, password });
   };
 
+  const handleEntraLogin = () => {
+    if (!entraStatus?.loginUrl) return;
+    setSsoLoading(true);
+    // Full-page redirect to the Entra login endpoint
+    window.location.href = entraStatus.loginUrl;
+  };
+
   const demoUsers = [
-    { label: "Executive",        desc: "All 9 tabs",           email: "executive@demo.com",      password: "Executive@2024!" },
-    { label: "QA",               desc: "QA tab only",          email: "qa@demo.com",             password: "QA@2024!" },
-    { label: "Sales & Marketing",desc: "Sales + Marketing",    email: "salesmarketing@demo.com", password: "SalesMarketing@2024!" },
-    { label: "CSM",              desc: "CSM tab only",         email: "csm@demo.com",            password: "CSM@2024!" },
+    { label: "Executive",         desc: "All 9 tabs",        email: "executive@demo.com",      password: "Executive@2024!" },
+    { label: "QA",                desc: "QA tab only",       email: "qa@demo.com",             password: "QA@2024!" },
+    { label: "Sales & Marketing", desc: "Sales + Marketing", email: "salesmarketing@demo.com", password: "SalesMarketing@2024!" },
+    { label: "CSM",               desc: "CSM tab only",      email: "csm@demo.com",            password: "CSM@2024!" },
   ];
+
+  const entraConfigured = entraStatus?.configured ?? false;
 
   return (
     <div className="min-h-screen flex">
@@ -89,9 +127,9 @@ export default function LoginPage() {
           {/* Feature list */}
           <div className="mt-8 space-y-3">
             {[
+              "Microsoft Entra ID SSO with corporate credentials",
+              "Duo Security MFA as second factor",
               "Role-based access control across 9 departments",
-              "Duo Security MFA on every login",
-              "Live data from Jira, GitHub, and Salesforce",
               "Audit logging for every action",
             ].map((f) => (
               <div key={f} className="flex items-start gap-2.5">
@@ -134,12 +172,71 @@ export default function LoginPage() {
               <h2 className="text-xl font-bold text-[#141A2B]">Sign in</h2>
               <p className="text-sm text-[#6E7791] mt-1">
                 Access your dashboard securely
-                {" · "}
-                <span className="text-[#018365] font-semibold">Protected by Duo MFA</span>
+                {entraConfigured ? (
+                  <>
+                    {" · "}
+                    <span className="text-[#018365] font-semibold">Microsoft SSO + Duo MFA</span>
+                  </>
+                ) : (
+                  <>
+                    {" · "}
+                    <span className="text-[#018365] font-semibold">Protected by Duo MFA</span>
+                  </>
+                )}
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Error banner (from Entra/Duo callback) */}
+            {errorMsg && (
+              <div className="mb-4 flex items-start gap-2.5 p-3 rounded-lg bg-red-50 border border-red-200">
+                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700">{errorMsg}</p>
+              </div>
+            )}
+
+            {/* ── Primary: Microsoft Entra SSO button (when configured) ──────── */}
+            {entraConfigured && (
+              <>
+                <Button
+                  type="button"
+                  onClick={handleEntraLogin}
+                  disabled={ssoLoading}
+                  className="w-full bg-[#0078D4] hover:bg-[#006CBE] text-white font-semibold rounded-lg h-11 transition-colors flex items-center justify-center gap-2.5"
+                >
+                  {ssoLoading ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Redirecting to Microsoft…
+                    </>
+                  ) : (
+                    <>
+                      <MicrosoftLogo />
+                      Sign in with Microsoft
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-center text-[11px] text-[#6E7791] mt-2">
+                  Uses your <strong>corporate Microsoft account</strong> · Duo MFA required
+                </p>
+
+                {/* Divider before fallback */}
+                <div className="flex items-center gap-3 my-5">
+                  <div className="flex-1 h-px bg-[#E2E8F0]" />
+                  <span className="text-xs text-[#6E7791]">or use demo credentials</span>
+                  <div className="flex-1 h-px bg-[#E2E8F0]" />
+                </div>
+              </>
+            )}
+
+            {/* ── Password form (always shown for demo users; primary when Entra not configured) */}
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              {!entraConfigured && (
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Microsoft Entra SSO is not yet configured. Using password login for demo access.
+                </p>
+              )}
+
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-sm font-semibold text-[#141A2B]">
                   Email address
@@ -184,25 +281,25 @@ export default function LoginPage() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Redirecting to Duo…
+                    Signing in…
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <Shield className="w-4 h-4" />
-                    Sign in with Duo MFA
+                    {entraConfigured ? "Sign in (demo)" : "Sign in with Duo MFA"}
                   </span>
                 )}
               </Button>
             </form>
 
-            {/* Divider */}
+            {/* Divider before Manus SSO */}
             <div className="flex items-center gap-3 my-5">
               <div className="flex-1 h-px bg-[#E2E8F0]" />
               <span className="text-xs text-[#6E7791]">or</span>
               <div className="flex-1 h-px bg-[#E2E8F0]" />
             </div>
 
-            {/* SSO Login */}
+            {/* Manus SSO (platform login) */}
             <a href={getLoginUrl()} className="block">
               <Button
                 variant="outline"
@@ -213,7 +310,7 @@ export default function LoginPage() {
               </Button>
             </a>
 
-            {/* Demo credentials */}
+            {/* Demo credentials quick-fill */}
             <div className="mt-6 p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
               <p className="text-[10px] font-bold text-[#6E7791] uppercase tracking-widest mb-3">
                 Demo Credentials
@@ -237,8 +334,17 @@ export default function LoginPage() {
 
           {/* Footer note */}
           <p className="text-center text-[11px] text-[#6E7791] mt-5">
-            Two-factor authentication powered by{" "}
-            <span className="text-[#018365] font-semibold">Duo Security</span>
+            {entraConfigured ? (
+              <>
+                Microsoft Entra ID SSO · Second factor by{" "}
+                <span className="text-[#018365] font-semibold">Duo Security</span>
+              </>
+            ) : (
+              <>
+                Two-factor authentication powered by{" "}
+                <span className="text-[#018365] font-semibold">Duo Security</span>
+              </>
+            )}
           </p>
         </div>
       </div>

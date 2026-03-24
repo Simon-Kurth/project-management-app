@@ -123,3 +123,22 @@
 - [ ] DashboardLayout: Users tab added for executive/admin roles
 - [ ] Tests: user management RBAC tests
 - [ ] Checkpoint saved
+
+## Entra ID (Azure AD) + Duo MFA Integration
+
+- [x] Research Entra OIDC + Duo chained auth pattern
+- [x] Install @azure/msal-node
+- [x] DB schema: add entra_oid, entra_upn, entra_tenant_id columns to users table
+- [x] DB schema: add pending_auth_store table for Entra→Duo state handoff
+- [x] Server: EntraOIDC module (authorization URL, PKCE, token exchange, id_token validation)
+- [x] Server: /api/auth/entra/login route (redirect to Entra with CSRF state)
+- [x] Server: /api/auth/entra/callback route (exchange code, validate id_token, upsert user)
+- [x] Server: chain Duo after Entra callback (pending_auth_store, redirect to Duo)
+- [x] Server: map Entra groups/roles to dashboard RBAC roles (ENTRA_GROUP_* env vars)
+- [x] Server: tRPC auth.entraStatus query (exposes configured flag + loginUrl to frontend)
+- [x] Frontend: login page shows SSO button when Entra is configured, password form as fallback
+- [x] Frontend: error banner reads ?error= query param from Entra/Duo callback failures
+- [x] Docs: docs/ENTRA_ACTIVATION_GUIDE.md (app registration, groups, troubleshooting)
+- [x] Docs: docs/ENV_REFERENCE.md (all environment variables documented)
+- [x] Tests: 13 unit tests for isEntraConfigured and mapEntraGroupsToRole (65 total passing)
+- [x] Checkpoint saved
