@@ -163,3 +163,11 @@
 - [x] Move drizzle/create-database.sql → sql/create-database.sql
 - [x] Add sql/README.md with naming conventions and run instructions
 - [ ] Checkpoint saved
+
+## SQL Scripts — Additional Scripts
+
+- [x] Create sql/create-app-login.sql (least-privilege app login)
+- [x] Create sql/migrate-template.sql (migration script template)
+- [x] Create sql/maint-purge-agent-job.sql (SQL Agent job for purge procedures)
+- [x] Update sql/README.md with new script entries
+- [ ] Checkpoint saved
