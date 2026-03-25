@@ -463,3 +463,101 @@ export async function consumePendingAuth(token: string): Promise<{ userId: numbe
   );
   return { userId: row.userId, username: row.username };
 }
+
+// ─── Notification Helpers ─────────────────────────────────────────────────────
+
+export type NotificationSeverity = "info" | "warning" | "error" | "success";
+
+export interface Notification {
+  id: number;
+  userId: number;
+  title: string;
+  body: string;
+  severity: NotificationSeverity;
+  actionUrl: string | null;
+  isRead: boolean;
+  readAt: Date | null;
+  source: string;
+  createdAt: Date;
+}
+
+export interface CreateNotificationParams {
+  userId: number;
+  title: string;
+  body: string;
+  severity?: NotificationSeverity;
+  actionUrl?: string | null;
+  source?: string;
+}
+
+/** Insert a new notification row. Returns the new row id. */
+export async function createNotification(params: CreateNotificationParams): Promise<number> {
+  const pool = await getPool();
+  if (!pool) return -1;
+  const id = await insertGetId(
+    `INSERT INTO notifications (userId, title, body, severity, actionUrl, source)
+     OUTPUT INSERTED.id
+     VALUES (@userId, @title, @body, @severity, @actionUrl, @source)`,
+    {
+      userId:    { type: sql.Int,               value: params.userId },
+      title:     { type: sql.NVarChar(255),     value: params.title },
+      body:      { type: sql.NVarChar(sql.MAX), value: params.body },
+      severity:  { type: sql.NVarChar(20),      value: params.severity ?? "info" },
+      actionUrl: { type: sql.NVarChar(1024),    value: params.actionUrl ?? null },
+      source:    { type: sql.NVarChar(100),     value: params.source ?? "system" },
+    },
+  );
+  return id ?? -1;
+}
+
+/** Fetch the most recent notifications for a user (newest first). */
+export async function getNotifications(
+  userId: number,
+  limit = 50,
+  onlyUnread = false,
+): Promise<Notification[]> {
+  const filter = onlyUnread ? "AND isRead = 0" : "";
+  return query<Notification>(
+    `SELECT TOP (@limit) id, userId, title, body, severity, actionUrl,
+            isRead, readAt, source, createdAt
+     FROM notifications
+     WHERE userId = @userId ${filter}
+     ORDER BY createdAt DESC`,
+    {
+      limit:  { type: sql.Int, value: limit },
+      userId: { type: sql.Int, value: userId },
+    },
+  );
+}
+
+/** Count unread notifications for a user. */
+export async function getUnreadCount(userId: number): Promise<number> {
+  const rows = await query<{ cnt: number }>(
+    "SELECT COUNT(*) AS cnt FROM notifications WHERE userId = @userId AND isRead = 0",
+    { userId: { type: sql.Int, value: userId } },
+  );
+  return rows[0]?.cnt ?? 0;
+}
+
+/** Mark a single notification as read. */
+export async function markNotificationRead(id: number, userId: number): Promise<void> {
+  await execute(
+    `UPDATE notifications
+     SET isRead = 1, readAt = GETUTCDATE()
+     WHERE id = @id AND userId = @userId AND isRead = 0`,
+    {
+      id:     { type: sql.Int, value: id },
+      userId: { type: sql.Int, value: userId },
+    },
+  );
+}
+
+/** Mark all unread notifications for a user as read. */
+export async function markAllNotificationsRead(userId: number): Promise<void> {
+  await execute(
+    `UPDATE notifications
+     SET isRead = 1, readAt = GETUTCDATE()
+     WHERE userId = @userId AND isRead = 0`,
+    { userId: { type: sql.Int, value: userId } },
+  );
+}

@@ -21,6 +21,11 @@ import {
   getAuditLogsForUser,
   seedConnectors,
   writeAuditLog,
+  getNotifications,
+  getUnreadCount,
+  markNotificationRead,
+  markAllNotificationsRead,
+  createNotification,
 } from "./db";
 import { runJiraSync } from "./scheduler";
 import { JiraConnector } from "./connectors/jira";
@@ -428,6 +433,57 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         requireUserManagement(ctx.user.role);
         return getAuditLogsForUser(input.userId, 20);
+      }),
+  }),
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  notifications: router({
+    // Fetch notifications for the current user
+    list: protectedProcedure
+      .input(z.object({
+        limit:      z.number().min(1).max(100).default(50),
+        onlyUnread: z.boolean().default(false),
+      }))
+      .query(async ({ input, ctx }) => {
+        return getNotifications(ctx.user.id, input.limit, input.onlyUnread);
+      }),
+
+    // Count of unread notifications for the current user
+    unreadCount: protectedProcedure
+      .query(async ({ ctx }) => {
+        const count = await getUnreadCount(ctx.user.id);
+        return { count };
+      }),
+
+    // Mark a single notification as read
+    markRead: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await markNotificationRead(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Mark all notifications as read
+    markAllRead: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await markAllNotificationsRead(ctx.user.id);
+        return { success: true };
+      }),
+
+    // Create a notification (admin/executive only — for manual admin alerts)
+    create: protectedProcedure
+      .input(z.object({
+        userId:    z.number(),
+        title:     z.string().min(1).max(255),
+        body:      z.string().min(1),
+        severity:  z.enum(["info", "warning", "error", "success"]).default("info"),
+        actionUrl: z.string().url().nullable().optional(),
+        source:    z.string().max(100).default("admin"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        requireUserManagement(ctx.user.role);
+        const id = await createNotification(input);
+        return { id };
       }),
   }),
 });

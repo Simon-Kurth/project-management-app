@@ -22,6 +22,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
+import { NotificationBell } from "./NotificationBell";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -278,8 +279,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </nav>
 
-        {/* Right: Duo status + role badge + profile */}
+        {/* Right: notification bell + Duo status + role badge + profile */}
         <div className="flex items-center gap-2 shrink-0">
+          <NotificationBell />
           <DuoStatusBadge />
 
           <span

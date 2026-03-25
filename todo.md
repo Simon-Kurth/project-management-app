@@ -178,4 +178,15 @@
 - [x] Update maint-purge-agent-job.sql with email alert operator and DBA notification
 - [x] Create migrate-20260401-add-notifications-table.sql (first real migration)
 - [x] Update sql/README.md with new migration script entry
+- [x] Checkpoint saved
+
+## Notifications Feature + KPI Monitor
+
+- [x] Add notifications DB helpers to server/db.ts (getNotifications, getUnreadCount, markNotificationRead, markAllNotificationsRead, createNotification)
+- [x] Add tRPC notifications router (list, unreadCount, markRead, markAllRead, create)
+- [x] Build NotificationBell component (unread badge, dropdown panel, mark-read actions)
+- [x] Wire NotificationBell into DashboardLayout header
+- [x] Add KPI threshold monitor using node-cron (server/kpiMonitor.ts, 8 threshold rules, startKpiMonitor called at server startup)
+- [x] Create sql/backfill-20260401-seed-demo-notifications.sql (4 demo users, 16 notifications across all severity levels)
+- [x] Write vitest tests for notifications helpers (server/notifications.test.ts — 13 tests, 78 total passing)
 - [ ] Checkpoint saved
