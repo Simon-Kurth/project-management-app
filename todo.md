@@ -155,4 +155,11 @@
 - [x] Create drizzle/sqlserver-init.sql: idempotent CREATE TABLE DDL for all 7 tables + triggers
 - [x] Update docs/ENV_REFERENCE.md: DATABASE_URL section updated for SQL Server connection strings
 - [x] TypeScript clean (0 errors) + all 65 tests pass
+- [x] Checkpoint saved
+
+## SQL Scripts Folder
+
+- [x] Create sql/ folder at project root
+- [x] Move drizzle/create-database.sql → sql/create-database.sql
+- [x] Add sql/README.md with naming conventions and run instructions
 - [ ] Checkpoint saved
