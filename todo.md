@@ -171,3 +171,11 @@
 - [x] Create sql/maint-purge-agent-job.sql (SQL Agent job for purge procedures)
 - [x] Update sql/README.md with new script entries
 - [ ] Checkpoint saved
+
+## SQL Scripts — Security & Migration Hardening
+
+- [x] Update create-app-login.sql with Azure Key Vault / secrets manager pattern
+- [x] Update maint-purge-agent-job.sql with email alert operator and DBA notification
+- [x] Create migrate-20260401-add-notifications-table.sql (first real migration)
+- [x] Update sql/README.md with new migration script entry
+- [ ] Checkpoint saved
