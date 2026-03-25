@@ -142,3 +142,17 @@
 - [x] Docs: docs/ENV_REFERENCE.md (all environment variables documented)
 - [x] Tests: 13 unit tests for isEntraConfigured and mapEntraGroupsToRole (65 total passing)
 - [x] Checkpoint saved
+
+## SQL Server Migration (MySQL → Microsoft SQL Server)
+
+- [x] Install mssql (tedious) driver, remove mysql2
+- [x] Create server/sqlserver.ts: typed connection pool helper (ADO.NET + URL format parsing)
+- [x] Rewrite server/db.ts: all helpers rewritten as parameterised mssql queries (MERGE, SELECT TOP, etc.)
+- [x] Fix server/duo.ts: all Drizzle calls replaced with mssql execute/query helpers
+- [x] Update server/_core/sdk.ts: import User from server/db instead of drizzle/schema
+- [x] Update server/_core/context.ts: import User from server/db instead of drizzle/schema
+- [x] Update shared/types.ts: re-export User/InsertUser/UserRole from server/db
+- [x] Create drizzle/sqlserver-init.sql: idempotent CREATE TABLE DDL for all 7 tables + triggers
+- [x] Update docs/ENV_REFERENCE.md: DATABASE_URL section updated for SQL Server connection strings
+- [x] TypeScript clean (0 errors) + all 65 tests pass
+- [ ] Checkpoint saved

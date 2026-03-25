@@ -11,9 +11,30 @@ This document lists every environment variable the application reads. Copy the r
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `PORT` | No | `3000` | Port the Express server listens on |
-| `DATABASE_URL` | Yes | — | MySQL/TiDB connection string |
+| `DATABASE_URL` | Yes | — | Microsoft SQL Server connection string (see formats below) |
 | `JWT_SECRET` | Yes | — | 64-character hex string for signing session cookies. Generate with `openssl rand -hex 32` |
 | `NODE_ENV` | No | `development` | Set to `production` in production deployments |
+
+### DATABASE_URL Formats
+
+The application accepts both ADO.NET connection string format and URL format.
+
+**ADO.NET connection string (recommended for Azure SQL):**
+```
+Server=your-server.database.windows.net;Database=wheelhouse;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=false;
+```
+
+**URL format:**
+```
+mssql://username:password@your-server.database.windows.net/wheelhouse
+```
+
+**Named instance with port:**
+```
+Server=your-server.company.com,1433;Database=wheelhouse;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=true;
+```
+
+Set `TrustServerCertificate=true` only for on-premises SQL Server with self-signed certificates. Always use `Encrypt=true` in production.
 
 ---
 
@@ -84,7 +105,8 @@ For a production deployment with full Entra SSO + Duo MFA:
 
 ```
 # Core
-DATABASE_URL=mysql://...
+# SQL Server ADO.NET connection string:
+DATABASE_URL=Server=your-server.database.windows.net;Database=wheelhouse;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=false;
 JWT_SECRET=<64-char hex>
 NODE_ENV=production
 

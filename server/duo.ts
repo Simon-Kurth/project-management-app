@@ -17,18 +17,17 @@
  */
 
 import { Client } from "@duosecurity/duo_universal";
-import { eq, and, gt } from "drizzle-orm";
-import { getDb } from "./db";
-import { duoStateStore } from "../drizzle/schema";
+import sql from "mssql";
+import { execute, query, getPool } from "./sqlserver";
 
 // ─── Environment ─────────────────────────────────────────────────────────────
 
 export function getDuoConfig() {
   return {
-    clientId: process.env.DUO_CLIENT_ID ?? "",
+    clientId:    process.env.DUO_CLIENT_ID     ?? "",
     clientSecret: process.env.DUO_CLIENT_SECRET ?? "",
-    apiHost: process.env.DUO_API_HOST ?? "",
-    redirectUrl: process.env.DUO_REDIRECT_URL ?? `${process.env.APP_URL ?? "http://localhost:3000"}/duo-callback`,
+    apiHost:     process.env.DUO_API_HOST       ?? "",
+    redirectUrl: process.env.DUO_REDIRECT_URL   ?? `${process.env.APP_URL ?? "http://localhost:3000"}/duo-callback`,
   };
 }
 
@@ -42,9 +41,9 @@ export function isDuoConfigured(): boolean {
 export function createDuoClient(): Client {
   const config = getDuoConfig();
   return new Client({
-    clientId: config.clientId,
+    clientId:    config.clientId,
     clientSecret: config.clientSecret,
-    apiHost: config.apiHost,
+    apiHost:     config.apiHost,
     redirectUrl: config.redirectUrl,
   });
 }
@@ -73,21 +72,25 @@ export async function duoHealthCheck(): Promise<{ ok: boolean; message: string }
  * Returns the URL to redirect the browser to.
  */
 export async function initiateDuoAuth(userId: number, username: string): Promise<string> {
+  const pool = await getPool();
+  if (!pool) throw new Error("Database unavailable");
+
   const client = createDuoClient();
   const state = client.generateState();
 
   // Store state in DB — expires in 10 minutes
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-  const db = await getDb();
-  if (!db) throw new Error("Database unavailable");
 
-  await db.insert(duoStateStore).values({
-    state,
-    username,
-    userId,
-    expiresAt,
-    used: false,
-  });
+  await execute(
+    `INSERT INTO duo_state_store (state, username, userId, expiresAt, used)
+     VALUES (@state, @username, @userId, @expiresAt, 0)`,
+    {
+      state:     { type: sql.NVarChar(128), value: state },
+      username:  { type: sql.NVarChar(320), value: username },
+      userId:    { type: sql.Int,           value: userId },
+      expiresAt: { type: sql.DateTime2,     value: expiresAt },
+    },
+  );
 
   const authUrl = await client.createAuthUrl(username, state);
   return authUrl;
@@ -111,22 +114,16 @@ export async function completeDuoCallback(
   state: string,
   duoCode: string
 ): Promise<DuoCallbackResult> {
-  const db = await getDb();
-  if (!db) throw new Error("Database unavailable");
+  const pool = await getPool();
+  if (!pool) throw new Error("Database unavailable");
 
   // 1. Look up state — must exist, not expired, not used
-  const now = new Date();
-  const rows = await db
-    .select()
-    .from(duoStateStore)
-    .where(
-      and(
-        eq(duoStateStore.state, state),
-        eq(duoStateStore.used, false),
-        gt(duoStateStore.expiresAt, now)
-      )
-    )
-    .limit(1);
+  const rows = await query<{ id: number; userId: number; username: string; expiresAt: Date; used: boolean }>(
+    `SELECT TOP 1 id, userId, username, expiresAt, used
+     FROM duo_state_store
+     WHERE state = @state AND used = 0 AND expiresAt > GETUTCDATE()`,
+    { state: { type: sql.NVarChar(128), value: state } },
+  );
 
   if (rows.length === 0) {
     throw new Error("Invalid or expired Duo state token. Please log in again.");
@@ -135,10 +132,10 @@ export async function completeDuoCallback(
   const stateRow = rows[0];
 
   // 2. Mark state as used immediately (one-time use, prevents replay)
-  await db
-    .update(duoStateStore)
-    .set({ used: true })
-    .where(eq(duoStateStore.id, stateRow.id));
+  await execute(
+    "UPDATE duo_state_store SET used = 1 WHERE id = @id",
+    { id: { type: sql.Int, value: stateRow.id } },
+  );
 
   // 3. Exchange duo_code for token via SDK
   const client = createDuoClient();
@@ -146,7 +143,7 @@ export async function completeDuoCallback(
   // SDK throws if the exchange fails or the token is invalid — no further validation needed
 
   return {
-    userId: stateRow.userId,
+    userId:   stateRow.userId,
     username: stateRow.username,
   };
 }
@@ -158,15 +155,10 @@ export async function completeDuoCallback(
  * Called periodically by the scheduler to keep the table clean.
  */
 export async function cleanupExpiredDuoStates(): Promise<number> {
-  const db = await getDb();
-  if (!db) return 0;
+  const pool = await getPool();
+  if (!pool) return 0;
 
-  const now = new Date();
-  const result = await db
-    .delete(duoStateStore)
-    .where(gt(duoStateStore.expiresAt, now));
-
-  // MySQL2 returns [ResultSetHeader, FieldPacket[]] — affectedRows is on [0]
-  const affectedRows = (result as unknown as [{ affectedRows: number }])[0]?.affectedRows ?? 0;
-  return affectedRows;
+  return execute(
+    "DELETE FROM duo_state_store WHERE expiresAt <= GETUTCDATE()",
+  );
 }
