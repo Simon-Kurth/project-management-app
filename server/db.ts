@@ -333,11 +333,15 @@ export async function seedConnectors(): Promise<void> {
 
 // ─── User Management Helpers (Executive-only) ────────────────────────────────
 
-export async function listAllUsers() {
-  return query<Pick<User, "id" | "name" | "email" | "role" | "loginMethod" | "isActive" | "lastSignedIn" | "createdAt">>(
-    `SELECT id, name, email, role, loginMethod, isActive, lastSignedIn, createdAt
+export async function listAllUsers(): Promise<User[]> {
+  return query<User>(
+    `SELECT id, openId, name, email, passwordHash, role, loginMethod,
+            isActive, mfaSecret, mfaEnabled, mfaVerified,
+            entraOid, entraUpn, entraTenantId,
+            createdAt, updatedAt, lastSignedIn
      FROM users
      ORDER BY lastSignedIn DESC`,
+    {},
   );
 }
 
@@ -561,3 +565,62 @@ export async function markAllNotificationsRead(userId: number): Promise<void> {
     { userId: { type: sql.Int, value: userId } },
   );
 }
+
+// ─── Notification Preferences ─────────────────────────────────────────────────
+
+export interface NotificationPreference {
+  id: number;
+  userId: number;
+  ruleId: string;
+  enabled: boolean;
+  updatedAt: Date;
+}
+
+/** Fetch all notification preferences for a user. */
+export async function getNotificationPreferences(userId: number): Promise<NotificationPreference[]> {
+  return query<NotificationPreference>(
+    `SELECT id, userId, ruleId, enabled, updatedAt
+     FROM notification_preferences
+     WHERE userId = @userId
+     ORDER BY ruleId`,
+    { userId: { type: sql.Int, value: userId } },
+  );
+}
+
+/** Upsert a single preference row (insert or update enabled flag). */
+export async function upsertNotificationPreference(
+  userId: number,
+  ruleId: string,
+  enabled: boolean,
+): Promise<void> {
+  await execute(
+    `MERGE notification_preferences AS target
+     USING (SELECT @userId AS userId, @ruleId AS ruleId) AS src
+       ON target.userId = src.userId AND target.ruleId = src.ruleId
+     WHEN MATCHED THEN
+       UPDATE SET enabled = @enabled
+     WHEN NOT MATCHED THEN
+       INSERT (userId, ruleId, enabled) VALUES (@userId, @ruleId, @enabled);`,
+    {
+      userId:  { type: sql.Int,          value: userId },
+      ruleId:  { type: sql.NVarChar(100), value: ruleId },
+      enabled: { type: sql.Bit,           value: enabled ? 1 : 0 },
+    },
+  );
+}
+
+/** Check if a specific rule is enabled for a user (default true if no row exists). */
+export async function isNotificationEnabled(userId: number, ruleId: string): Promise<boolean> {
+  const rows = await query<{ enabled: boolean }>(
+    `SELECT enabled FROM notification_preferences
+     WHERE userId = @userId AND ruleId = @ruleId`,
+    {
+      userId: { type: sql.Int,          value: userId },
+      ruleId: { type: sql.NVarChar(100), value: ruleId },
+    },
+  );
+  // No row = default enabled
+  return rows.length === 0 ? true : Boolean(rows[0].enabled);
+}
+
+

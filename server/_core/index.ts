@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { startScheduler } from "../scheduler";
 import { startKpiMonitor } from "../kpiMonitor";
+import { registerSseRoute } from "../sseEmitter";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,8 @@ async function startServer() {
   registerOAuthRoutes(app);
   // Entra ID OIDC routes: /api/auth/entra/login and /api/auth/entra/callback
   registerEntraRoutes(app);
+  // SSE real-time notification stream: GET /api/events/notifications
+  registerSseRoute(app);
   // tRPC API
   app.use(
     "/api/trpc",

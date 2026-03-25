@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Clock,
   KeyRound,
+  Megaphone,
   Search,
   Shield,
   ShieldOff,
@@ -14,6 +15,9 @@ import {
   UserX,
   X,
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -464,6 +468,9 @@ export default function UserManagementTab() {
         )}
       </div>
 
+      {/* Send Announcement */}
+      <BroadcastForm />
+
       {/* Audit trail drawer */}
       {selectedUser && (
         <AuditTrailDrawer
@@ -471,6 +478,106 @@ export default function UserManagementTab() {
           onClose={() => setSelectedUser(null)}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Broadcast Form ───────────────────────────────────────────────────────────
+
+function BroadcastForm() {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [severity, setSeverity] = useState<"info" | "warning" | "error" | "success">("info");
+  const [targetRole, setTargetRole] = useState<string>("all");
+
+  const broadcast = trpc.notifications.broadcast.useMutation({
+    onSuccess: (data: { sent: number }) => {
+      toast.success(`Announcement sent to ${data.sent} user${data.sent !== 1 ? "s" : ""}`);
+      setTitle("");
+      setBody("");
+      setSeverity("info");
+      setTargetRole("all");
+    },
+    onError: (err: { message: string }) => toast.error(err.message),
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !body.trim()) return;
+    broadcast.mutate({ title: title.trim(), body: body.trim(), severity, targetRole: targetRole as "all" | "executive" | "admin" | "company" | "qa" | "sales_marketing" | "csm" | "user" });
+  }
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Megaphone className="w-4 h-4 text-amber-400" />
+        <h2 className="text-sm font-semibold text-white">Send Announcement</h2>
+        <span className="text-xs text-zinc-500 ml-1">Broadcast a notification to users by role</span>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-400">Target audience</label>
+            <Select value={targetRole} onValueChange={setTargetRole}>
+              <SelectTrigger className="bg-white/[0.04] border-white/[0.08] text-white text-sm h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All users</SelectItem>
+                <SelectItem value="executive">Executive</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="company">Company</SelectItem>
+                <SelectItem value="qa">QA</SelectItem>
+                <SelectItem value="sales_marketing">Sales &amp; Marketing</SelectItem>
+                <SelectItem value="csm">CSM</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-400">Severity</label>
+            <Select value={severity} onValueChange={(v) => setSeverity(v as typeof severity)}>
+              <SelectTrigger className="bg-white/[0.04] border-white/[0.08] text-white text-sm h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="info">Info</SelectItem>
+                <SelectItem value="warning">Warning</SelectItem>
+                <SelectItem value="error">Alert</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-zinc-400">Title</label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Announcement title…"
+            maxLength={255}
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-zinc-400">Message</label>
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Write your announcement…"
+            rows={3}
+            className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 text-sm resize-none"
+          />
+        </div>
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={!title.trim() || !body.trim() || broadcast.isPending}
+            className="bg-amber-500 hover:bg-amber-400 text-black font-medium text-sm h-9 px-4"
+          >
+            {broadcast.isPending ? "Sending…" : "Send Announcement"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

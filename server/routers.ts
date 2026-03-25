@@ -26,6 +26,8 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
   createNotification,
+  getNotificationPreferences,
+  upsertNotificationPreference,
 } from "./db";
 import { runJiraSync } from "./scheduler";
 import { JiraConnector } from "./connectors/jira";
@@ -484,6 +486,59 @@ export const appRouter = router({
         requireUserManagement(ctx.user.role);
         const id = await createNotification(input);
         return { id };
+      }),
+
+    // Broadcast a notification to all users of a specific role (admin/executive only)
+    broadcast: protectedProcedure
+      .input(z.object({
+        targetRole: z.enum(["executive", "admin", "company", "qa", "sales_marketing", "csm", "user", "all"]),
+        title:      z.string().min(1).max(255),
+        body:       z.string().min(1),
+        severity:   z.enum(["info", "warning", "error", "success"]).default("info"),
+        actionUrl:  z.string().nullable().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        requireUserManagement(ctx.user.role);
+        const allUsers = await listAllUsers();
+        const targets = input.targetRole === "all"
+          ? allUsers
+          : allUsers.filter((u) => u.role === input.targetRole);
+        let sent = 0;
+        for (const user of targets) {
+          await createNotification({
+            userId:    user.id,
+            title:     input.title,
+            body:      input.body,
+            severity:  input.severity,
+            actionUrl: input.actionUrl ?? null,
+            source:    "admin",
+          });
+          sent++;
+        }
+        await writeAuditLog({
+          userId:   ctx.user.id,
+          action:   "broadcast_notification",
+          resource: "notifications",
+          metadata: { targetRole: input.targetRole, title: input.title, sent },
+        });
+        return { sent };
+      }),
+
+    // Get notification preferences for the current user
+    getPreferences: protectedProcedure
+      .query(async ({ ctx }) => {
+        return getNotificationPreferences(ctx.user.id);
+      }),
+
+    // Set a single notification preference
+    setPreference: protectedProcedure
+      .input(z.object({
+        ruleId:  z.string().min(1).max(100),
+        enabled: z.boolean(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await upsertNotificationPreference(ctx.user.id, input.ruleId, input.enabled);
+        return { success: true };
       }),
   }),
 });

@@ -19,6 +19,7 @@ import CSMTab from "./pages/tabs/CSMTab";
 import SalesTab from "./pages/tabs/SalesTab";
 import MarketingTab from "./pages/tabs/MarketingTab";
 import UserManagementTab from "./pages/tabs/UserManagementTab";
+import NotificationPreferencesPage from "./pages/NotificationPreferencesPage";
 import NotFound from "./pages/NotFound";
 
 // ─── RBAC access map (mirrors server/routers.ts TAB_ACCESS) ──────────────────
@@ -159,6 +160,12 @@ function Router() {
       <Route path="/dashboard/users">
         <ProtectedRoute tab="users">
           <DashboardLayout><UserManagementTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/dashboard/notification-preferences">
+        <ProtectedRoute>
+          <DashboardLayout><NotificationPreferencesPage /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 

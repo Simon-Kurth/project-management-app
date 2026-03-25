@@ -189,4 +189,20 @@
 - [x] Add KPI threshold monitor using node-cron (server/kpiMonitor.ts, 8 threshold rules, startKpiMonitor called at server startup)
 - [x] Create sql/backfill-20260401-seed-demo-notifications.sql (4 demo users, 16 notifications across all severity levels)
 - [x] Write vitest tests for notifications helpers (server/notifications.test.ts — 13 tests, 78 total passing)
+- [x] Checkpoint saved
+
+## Notification Preferences + SSE Push + Admin Broadcast
+
+- [x] DB schema: notification_preferences table (userId, ruleId, enabled)
+- [x] DB helpers: getNotificationPreferences, upsertNotificationPreference
+- [x] tRPC: notifications.getPreferences query, notifications.setPreference mutation
+- [x] Frontend: NotificationPreferencesPage (/dashboard/notification-preferences)
+- [x] NotificationBell: preferences link in dropdown footer
+- [x] SSE: GET /api/events/notifications endpoint (per-user stream, registered in server entry point)
+- [x] SSE: server-side emitter helper (emitToUser, emitToRole) in server/sseEmitter.ts
+- [x] NotificationBell: replaced 60s poll with SSE connection + exponential backoff + live indicator dot
+- [x] Admin broadcast: trpc.notifications.broadcast mutation (admin-only, role-targeted, emits SSE)
+- [x] User Management page: "Send Announcement" form (title, body, severity, target role)
+- [x] SQL: migrate-20260402-add-notification-preferences-table.sql
+- [x] 78 tests passing (0 TypeScript errors)
 - [ ] Checkpoint saved

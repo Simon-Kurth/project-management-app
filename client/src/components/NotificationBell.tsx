@@ -4,12 +4,14 @@
  * Dashboard header bell icon with unread badge, dropdown panel listing the
  * most recent notifications, and mark-read actions.
  *
- * Polls the unread count every 60 seconds. Fetches the full list lazily when
- * the panel is opened for the first time or after a mark-read action.
+ * Real-time updates via Server-Sent Events (GET /api/events/notifications).
+ * Falls back to 60-second polling if SSE is unavailable (e.g. Safari Private).
+ * Includes a link to the notification preferences page.
  */
 
-import { useState, useRef, useEffect } from "react";
-import { Bell, CheckCheck, X, ExternalLink, Info, AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Bell, CheckCheck, X, ExternalLink, Info, AlertTriangle, AlertCircle, CheckCircle, Settings } from "lucide-react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +41,64 @@ function relativeTime(date: Date | string): string {
   return d.toLocaleDateString();
 }
 
+// ─── SSE hook ─────────────────────────────────────────────────────────────────
+
+/**
+ * Opens a persistent SSE connection to /api/events/notifications.
+ * Calls `onUpdate` whenever the server pushes a "notification" event.
+ * Returns `sseConnected` so the parent can show a status indicator.
+ */
+function useNotificationSSE(onUpdate: () => void): boolean {
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    if (typeof EventSource === "undefined") return; // SSR / old browser guard
+
+    let es: EventSource;
+    let retryTimeout: ReturnType<typeof setTimeout>;
+    let retryDelay = 2_000;
+
+    function connect() {
+      es = new EventSource("/api/events/notifications", { withCredentials: true });
+
+      es.addEventListener("notification", (e: MessageEvent) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.type !== "ping") {
+            onUpdate();
+          }
+        } catch {
+          // Malformed payload — ignore
+        }
+      });
+
+      es.onopen = () => {
+        setConnected(true);
+        retryDelay = 2_000; // reset backoff on successful connect
+      };
+
+      es.onerror = () => {
+        setConnected(false);
+        es.close();
+        // Exponential backoff: 2s → 4s → 8s → … → max 60s
+        retryDelay = Math.min(retryDelay * 2, 60_000);
+        retryTimeout = setTimeout(connect, retryDelay);
+      };
+    }
+
+    connect();
+
+    return () => {
+      clearTimeout(retryTimeout);
+      es?.close();
+      setConnected(false);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // onUpdate is stable via useCallback in parent
+
+  return connected;
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function NotificationBell() {
@@ -46,9 +106,17 @@ export function NotificationBell() {
   const panelRef = useRef<HTMLDivElement>(null);
   const utils = trpc.useUtils();
 
-  // Poll unread count every 60 s
+  // Invalidate both queries when SSE fires
+  const handleSseUpdate = useCallback(() => {
+    utils.notifications.unreadCount.invalidate();
+    utils.notifications.list.invalidate();
+  }, [utils]);
+
+  const sseConnected = useNotificationSSE(handleSseUpdate);
+
+  // Unread count — poll every 60 s as fallback when SSE is not connected
   const { data: countData } = trpc.notifications.unreadCount.useQuery(undefined, {
-    refetchInterval: 60_000,
+    refetchInterval: sseConnected ? false : 60_000,
     staleTime: 30_000,
   });
   const unreadCount = countData?.count ?? 0;
@@ -110,6 +178,10 @@ export function NotificationBell() {
           <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
+        )}
+        {/* Live indicator dot when SSE is connected */}
+        {sseConnected && (
+          <span className="absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-background" title="Live updates active" />
         )}
       </button>
 
@@ -247,13 +319,21 @@ export function NotificationBell() {
           </div>
 
           {/* Footer */}
-          {notifications && notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-border bg-muted/30">
-              <p className="text-xs text-muted-foreground text-center">
-                Showing last {notifications.length} notifications
-              </p>
-            </div>
-          )}
+          <div className="px-4 py-2 border-t border-border bg-muted/30 flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              {notifications && notifications.length > 0
+                ? `Showing last ${notifications.length} notifications`
+                : "No notifications"}
+            </p>
+            <Link
+              href="/dashboard/notification-preferences"
+              onClick={() => setOpen(false)}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Settings className="w-3 h-3" />
+              Preferences
+            </Link>
+          </div>
         </div>
       )}
     </div>
