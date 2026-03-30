@@ -29,6 +29,7 @@ import {
   getNotificationPreferences,
   upsertNotificationPreference,
 } from "./db";
+import { withDbError } from "./sqlserver";
 import { runJiraSync } from "./scheduler";
 import { JiraConnector } from "./connectors/jira";
 import { mockData, connectorStubs } from "./mockData";
@@ -100,9 +101,9 @@ export const appRouter = router({
         const ip = ctx.req.headers["x-forwarded-for"]?.toString() || ctx.req.socket?.remoteAddress || "unknown";
         const ua = ctx.req.headers["user-agent"] || "unknown";
 
-        const user = await getUserByEmail(input.email);
+        const user = await withDbError(() => getUserByEmail(input.email));
         if (!user || !user.isActive || !user.passwordHash) {
-          await writeAuditLog({ userEmail: input.email, action: "LOGIN_FAILED", resource: "auth", ipAddress: ip, userAgent: ua, metadata: { reason: "user_not_found" } });
+          await withDbError(() => writeAuditLog({ userEmail: input.email, action: "LOGIN_FAILED", resource: "auth", ipAddress: ip, userAgent: ua, metadata: { reason: "user_not_found" } }));
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid credentials" });
         }
 

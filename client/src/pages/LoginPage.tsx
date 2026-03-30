@@ -56,8 +56,20 @@ export default function LoginPage() {
       }
     },
     onError: (err) => {
-      toast.error(err.message || "Invalid credentials");
       setLoading(false);
+      // Detect database connectivity errors and show a clear admin-facing message
+      const isDbError =
+        err.message?.includes("database is not reachable") ||
+        err.message?.includes("Failed to connect") ||
+        err.message?.includes("Could not connect") ||
+        err.data?.code === "SERVICE_UNAVAILABLE";
+      if (isDbError) {
+        setErrorMsg(
+          "The application database is not reachable. Please ensure DATABASE_URL is configured and the SQL Server instance is running."
+        );
+      } else {
+        setErrorMsg(err.message || "Invalid credentials");
+      }
     },
   });
 

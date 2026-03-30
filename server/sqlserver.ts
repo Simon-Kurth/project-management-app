@@ -223,3 +223,39 @@ export async function closeSqlPool(): Promise<void> {
 
 // Re-export sql types for use in query helpers
 export { sql };
+
+/**
+ * Wraps a DB call and converts connection/pool errors into a TRPCError
+ * with code SERVICE_UNAVAILABLE so the client receives a clean message
+ * instead of a raw tedious ConnectionError stack trace.
+ *
+ * Usage:
+ *   const user = await withDbError(() => getUserByEmail(email));
+ */
+export async function withDbError<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // Detect tedious / mssql connection failures
+    const isConnErr =
+      msg.includes("Failed to connect") ||
+      msg.includes("Could not connect") ||
+      msg.includes("ConnectionError") ||
+      msg.includes("ECONNREFUSED") ||
+      msg.includes("ETIMEDOUT") ||
+      (err as { name?: string }).name === "ConnectionError";
+
+    if (isConnErr) {
+      // Import lazily to avoid circular deps — TRPCError is tiny
+      const { TRPCError } = await import("@trpc/server");
+      throw new TRPCError({
+        code: "SERVICE_UNAVAILABLE",
+        message:
+          "The database is not reachable. Please check your DATABASE_URL configuration and ensure the SQL Server is running.",
+        cause: err,
+      });
+    }
+    throw err;
+  }
+}

@@ -205,4 +205,12 @@
 - [x] User Management page: "Send Announcement" form (title, body, severity, target role)
 - [x] SQL: migrate-20260402-add-notification-preferences-table.sql
 - [x] 78 tests passing (0 TypeScript errors)
+- [x] Checkpoint saved
+
+## DB Connection Error Handling Fix
+
+- [x] Add withDbError() helper in server/sqlserver.ts — catches tedious ConnectionError and re-throws as TRPCError SERVICE_UNAVAILABLE
+- [x] Wrap getUserByEmail and writeAuditLog calls in loginWithPassword with withDbError()
+- [x] Update LoginPage onError to detect SERVICE_UNAVAILABLE and show clear admin-facing banner
+- [x] 78 tests passing, 0 TypeScript errors
 - [ ] Checkpoint saved
