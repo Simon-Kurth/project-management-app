@@ -30,6 +30,7 @@ import {
   upsertNotificationPreference,
 } from "./db";
 import { withDbError } from "./sqlserver";
+import { getDemoUser } from "./demoUsers";
 import { runJiraSync } from "./scheduler";
 import { JiraConnector } from "./connectors/jira";
 import { mockData, connectorStubs } from "./mockData";
@@ -101,23 +102,42 @@ export const appRouter = router({
         const ip = ctx.req.headers["x-forwarded-for"]?.toString() || ctx.req.socket?.remoteAddress || "unknown";
         const ua = ctx.req.headers["user-agent"] || "unknown";
 
-        const user = await withDbError(() => getUserByEmail(input.email));
+        // ── User lookup: try DB first, fall back to in-memory demo store ────────
+        let user;
+        let usingDemoFallback = false;
+        try {
+          user = await withDbError(() => getUserByEmail(input.email));
+        } catch (err: unknown) {
+          // DB is unreachable — check if this is a demo account
+          const demo = getDemoUser(input.email);
+          if (!demo) {
+            // Not a demo account and DB is down — surface the DB error
+            throw err;
+          }
+          user = demo;
+          usingDemoFallback = true;
+        }
+
         if (!user || !user.isActive || !user.passwordHash) {
-          await withDbError(() => writeAuditLog({ userEmail: input.email, action: "LOGIN_FAILED", resource: "auth", ipAddress: ip, userAgent: ua, metadata: { reason: "user_not_found" } }));
+          if (!usingDemoFallback) {
+            await withDbError(() => writeAuditLog({ userEmail: input.email, action: "LOGIN_FAILED", resource: "auth", ipAddress: ip, userAgent: ua, metadata: { reason: "user_not_found" } })).catch(() => {});
+          }
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid credentials" });
         }
 
         const valid = await bcrypt.compare(input.password, user.passwordHash);
         if (!valid) {
-          await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_FAILED", resource: "auth", ipAddress: ip, userAgent: ua, metadata: { reason: "wrong_password" } });
+          if (!usingDemoFallback) {
+            await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_FAILED", resource: "auth", ipAddress: ip, userAgent: ua, metadata: { reason: "wrong_password" } }).catch(() => {});
+          }
           throw new TRPCError({ code: "UNAUTHORIZED", message: "Invalid credentials" });
         }
 
         // ── Duo Universal Prompt MFA ──────────────────────────────────────────
-        // If Duo is configured, always require Duo 2FA after password validation.
-        // If Duo is NOT configured (dev/test), skip MFA and create session directly.
-        if (isDuoConfigured()) {
-          await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_DUO_INITIATED", resource: "auth", ipAddress: ip, userAgent: ua });
+        // Demo fallback users skip Duo (no DB to store state) and go straight to session.
+        // If Duo is configured and this is a real DB user, always require 2FA.
+        if (isDuoConfigured() && !usingDemoFallback) {
+          await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_DUO_INITIATED", resource: "auth", ipAddress: ip, userAgent: ua }).catch(() => {});
 
           // Generate Duo auth URL — stores state in DB for CSRF validation
           const duoAuthUrl = await initiateDuoAuth(user.id, user.email ?? user.openId);
@@ -130,8 +150,10 @@ export const appRouter = router({
           };
         }
 
-        // Duo not configured — create session directly (dev/test mode)
-        await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_SUCCESS", resource: "auth", ipAddress: ip, userAgent: ua });
+        // Duo not configured (or demo fallback) — create session directly
+        if (!usingDemoFallback) {
+          await writeAuditLog({ userId: user.id, userEmail: user.email ?? undefined, action: "LOGIN_SUCCESS", resource: "auth", ipAddress: ip, userAgent: ua }).catch(() => {});
+        }
 
         const sessionToken = await sdk.createSessionToken(user.openId, { name: user.name ?? user.email ?? "" });
         const cookieOptions = getSessionCookieOptions(ctx.req);

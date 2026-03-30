@@ -213,4 +213,11 @@
 - [x] Wrap getUserByEmail and writeAuditLog calls in loginWithPassword with withDbError()
 - [x] Update LoginPage onError to detect SERVICE_UNAVAILABLE and show clear admin-facing banner
 - [x] 78 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved
+
+## Demo Login Fix (DB-free fallback)
+
+- [x] Add in-memory DEMO_USERS store in server/demoUsers.ts (pre-hashed passwords, all 4 demo roles)
+- [x] Update loginWithPassword to catch SERVICE_UNAVAILABLE and fall back to demo user store
+- [x] Demo sessions use same JWT cookie flow — no DB writes needed; Duo and audit log writes skipped for demo users
 - [ ] Checkpoint saved
