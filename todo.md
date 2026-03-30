@@ -252,4 +252,9 @@
 - [x] Create stub pages: ProjectManagementTab, UCPTab, SSOCTab, EnterpriseTab, ProdSupportTab, SettingsTab
 - [x] Settings section consolidates User Management + Notification Preferences with role-gated links
 - [x] 78 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved
+
+## Executive Overview — Profitability Forecast Chart
+
+- [x] Replace Headcount by Department chart with Profitability Forecast chart (LineChart, 9 actuals + 3 forecast months, gross/net profit + dashed forecast line, ReferenceLine divider)
 - [ ] Checkpoint saved
