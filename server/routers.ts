@@ -28,6 +28,7 @@ import {
   createNotification,
   getNotificationPreferences,
   upsertNotificationPreference,
+  getAiAdoptionScores,
 } from "./db";
 import { withDbError } from "./sqlserver";
 import { getDemoUser } from "./demoUsers";
@@ -562,6 +563,31 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         await upsertNotificationPreference(ctx.user.id, input.ruleId, input.enabled);
         return { success: true };
+      }),
+  }),
+
+  // ─── HR / AI Adoption ─────────────────────────────────────────────────────
+  hr: router({
+    // Returns all employees sorted by overallScore DESC.
+    // Falls back to the in-memory mock store when the DB is unavailable.
+    aiAdoption: protectedProcedure
+      .query(async ({ ctx }) => {
+        const role = (ctx.user as { role?: string }).role ?? "user";
+        const allowed: string[] = ["executive", "company", "admin"];
+        if (!allowed.includes(role)) {
+          throw new Error("Forbidden");
+        }
+
+        // Try DB first; fall back to mock data when DB is unavailable
+        try {
+          const rows = await getAiAdoptionScores();
+          if (rows.length > 0) return rows;
+        } catch {
+          // DB unavailable — fall through to mock data
+        }
+
+        // In-memory mock data (matches sql seed)
+        return mockData.aiAdoptionScores;
       }),
   }),
 });

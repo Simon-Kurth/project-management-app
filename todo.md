@@ -257,4 +257,15 @@
 ## Executive Overview — Profitability Forecast Chart
 
 - [x] Replace Headcount by Department chart with Profitability Forecast chart (LineChart, 9 actuals + 3 forecast months, gross/net profit + dashed forecast line, ReferenceLine divider)
-- [ ] Checkpoint saved
+- [x] Checkpoint saved
+
+## HR Tab + AI Adoption Ranking Page
+
+- [x] Add HR as sub-tab under Executive Summary in DashboardLayout nav
+- [x] Add /dashboard/hr route in App.tsx
+- [x] Create HRTab.tsx with AI Adoption ranking page (employee table, scores, rank badges, charts)
+- [x] Add ai_adoption_scores DB table and SQL migration script (sql/migrate-20260402-add-ai-adoption-scores-table.sql)
+- [x] Add tRPC procedure: hr.aiAdoption query with DB + mock fallback
+- [x] Wire HRTab to tRPC hr.aiAdoption query (falls back to DEMO_EMPLOYEES when DB unavailable)
+- [x] 78 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved

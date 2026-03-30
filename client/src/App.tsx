@@ -25,6 +25,7 @@ import ProdSupportTab from "./pages/tabs/ProdSupportTab";
 import SalesTab from "./pages/tabs/SalesTab";
 import MarketingTab from "./pages/tabs/MarketingTab";
 import CSMTab from "./pages/tabs/CSMTab";
+import HRTab from "./pages/tabs/HRTab";
 import SettingsTab from "./pages/tabs/SettingsTab";
 import UserManagementTab from "./pages/tabs/UserManagementTab";
 import NotificationPreferencesPage from "./pages/NotificationPreferencesPage";
@@ -38,6 +39,7 @@ const TAB_ACCESS: Record<string, AppRole[]> = {
   // Executive Summary section
   "executive-summary":   ["executive", "company", "admin"],
   "financials":          ["executive", "company", "admin"],
+  "hr":                  ["executive", "company", "admin"],
   // Delivery section
   "delivery":            ["executive", "company", "admin"],
   "qa":                  ["executive", "company", "admin", "qa"],
@@ -121,6 +123,11 @@ function Router() {
       </Route>
 
       {/* ── Executive Summary section ─────────────────────────────────────── */}
+      <Route path="/dashboard/hr">
+        <ProtectedRoute tab="hr">
+          <DashboardLayout><HRTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
       <Route path="/dashboard/executive-summary">
         <ProtectedRoute tab="executive-summary">
           <DashboardLayout><ExecutiveSummaryTab /></DashboardLayout>

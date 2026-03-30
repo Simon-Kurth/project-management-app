@@ -624,3 +624,96 @@ export async function isNotificationEnabled(userId: number, ruleId: string): Pro
 }
 
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Adoption Scores helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface AiAdoptionScore {
+  id: number;
+  userId: number | null;
+  employeeName: string;
+  department: string;
+  jobTitle: string;
+  overallScore: number;
+  trendDelta: number;
+  toolsUsed: number;
+  promptsPerWeek: number;
+  automationsCreated: number;
+  dimToolUsage: number;
+  dimPromptQuality: number;
+  dimAutomation: number;
+  dimTraining: number;
+  dimCollaboration: number;
+  dimInnovation: number;
+  tier: "Pioneer" | "Adopter" | "Learner" | "Laggard";
+  lastActiveAt: Date | null;
+  scoreDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export async function getAiAdoptionScores(): Promise<AiAdoptionScore[]> {
+  const pool = await getPool();
+  if (!pool) return [];
+  const result = await pool.request().query<AiAdoptionScore>(`
+    SELECT id, userId, employeeName, department, jobTitle,
+           overallScore, trendDelta, toolsUsed, promptsPerWeek, automationsCreated,
+           dimToolUsage, dimPromptQuality, dimAutomation, dimTraining,
+           dimCollaboration, dimInnovation, tier,
+           lastActiveAt, scoreDate, createdAt, updatedAt
+    FROM dbo.ai_adoption_scores
+    ORDER BY overallScore DESC
+  `);
+  return result.recordset;
+}
+
+export async function upsertAiAdoptionScore(
+  data: Omit<AiAdoptionScore, "id" | "createdAt" | "updatedAt" | "scoreDate">
+): Promise<void> {
+  const pool = await getPool();
+  if (!pool) return;
+  const req = pool.request();
+  req.input("employeeName",       sql.NVarChar(200), data.employeeName);
+  req.input("department",         sql.NVarChar(100), data.department);
+  req.input("jobTitle",           sql.NVarChar(200), data.jobTitle);
+  req.input("overallScore",       sql.TinyInt,       data.overallScore);
+  req.input("trendDelta",         sql.SmallInt,      data.trendDelta);
+  req.input("toolsUsed",          sql.TinyInt,       data.toolsUsed);
+  req.input("promptsPerWeek",     sql.SmallInt,      data.promptsPerWeek);
+  req.input("automationsCreated", sql.SmallInt,      data.automationsCreated);
+  req.input("dimToolUsage",       sql.TinyInt,       data.dimToolUsage);
+  req.input("dimPromptQuality",   sql.TinyInt,       data.dimPromptQuality);
+  req.input("dimAutomation",      sql.TinyInt,       data.dimAutomation);
+  req.input("dimTraining",        sql.TinyInt,       data.dimTraining);
+  req.input("dimCollaboration",   sql.TinyInt,       data.dimCollaboration);
+  req.input("dimInnovation",      sql.TinyInt,       data.dimInnovation);
+  req.input("tier",               sql.NVarChar(20),  data.tier);
+  req.input("lastActiveAt",       sql.DateTime2,     data.lastActiveAt);
+  req.input("userId",             sql.Int,           data.userId ?? null);
+
+  await req.query(`
+    MERGE dbo.ai_adoption_scores AS target
+    USING (SELECT @employeeName AS employeeName) AS src ON target.employeeName = src.employeeName
+    WHEN MATCHED THEN
+      UPDATE SET
+        department = @department, jobTitle = @jobTitle,
+        overallScore = @overallScore, trendDelta = @trendDelta,
+        toolsUsed = @toolsUsed, promptsPerWeek = @promptsPerWeek,
+        automationsCreated = @automationsCreated,
+        dimToolUsage = @dimToolUsage, dimPromptQuality = @dimPromptQuality,
+        dimAutomation = @dimAutomation, dimTraining = @dimTraining,
+        dimCollaboration = @dimCollaboration, dimInnovation = @dimInnovation,
+        tier = @tier, lastActiveAt = @lastActiveAt, userId = @userId,
+        scoreDate = CAST(SYSUTCDATETIME() AS DATE)
+    WHEN NOT MATCHED THEN
+      INSERT (employeeName, department, jobTitle, overallScore, trendDelta,
+              toolsUsed, promptsPerWeek, automationsCreated,
+              dimToolUsage, dimPromptQuality, dimAutomation, dimTraining,
+              dimCollaboration, dimInnovation, tier, lastActiveAt, userId)
+      VALUES (@employeeName, @department, @jobTitle, @overallScore, @trendDelta,
+              @toolsUsed, @promptsPerWeek, @automationsCreated,
+              @dimToolUsage, @dimPromptQuality, @dimAutomation, @dimTraining,
+              @dimCollaboration, @dimInnovation, @tier, @lastActiveAt, @userId);
+  `);
+}

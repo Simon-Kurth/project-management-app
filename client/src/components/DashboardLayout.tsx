@@ -23,6 +23,7 @@ import {
   Layers,
   Headset,
   Briefcase,
+  Users2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -61,7 +62,8 @@ interface NavSection {
 // ─── Navigation tree ─────────────────────────────────────────────────────────
 // Structure:
 //   Executive Summary  → /dashboard/executive-summary
-//     └ Financials     → /dashboard/financials
+//     ├ Financials     → /dashboard/financials
+//     └ HR             → /dashboard/hr  (AI Adoption ranking)
 //   Delivery           → /dashboard/delivery
 //     ├ QA             → /dashboard/qa
 //     └ Project Mgmt   → /dashboard/project-management  (stub)
@@ -87,6 +89,12 @@ const ALL_SECTIONS: NavSection[] = [
         id: "financials",
         label: "Financials",
         path: "/dashboard/financials",
+        roles: ["executive", "company", "admin"],
+      },
+      {
+        id: "hr",
+        label: "HR",
+        path: "/dashboard/hr",
         roles: ["executive", "company", "admin"],
       },
     ],
