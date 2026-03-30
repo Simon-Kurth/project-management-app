@@ -18,6 +18,11 @@ import {
   TrendingUp,
   Users,
   Anchor,
+  Server,
+  Building2,
+  Layers,
+  Headset,
+  Briefcase,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -35,90 +40,165 @@ type AppRole =
   | "sales_marketing"
   | "csm";
 
-interface Tab {
+interface SubTab {
   id: string;
   label: string;
   path: string;
-  icon: React.ReactNode;
   roles: AppRole[];
 }
 
-// ─── Tab registry ─────────────────────────────────────────────────────────────
+interface NavSection {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  /** If set, clicking the main tab navigates here directly (no sub-tabs shown) */
+  path?: string;
+  /** Sub-tabs shown in the secondary bar when this section is active */
+  subTabs?: SubTab[];
+  roles: AppRole[];
+}
 
-const ALL_TABS: Tab[] = [
+// ─── Navigation tree ─────────────────────────────────────────────────────────
+// Structure:
+//   Executive Summary  → /dashboard/executive-summary
+//     └ Financials     → /dashboard/financials
+//   Delivery           → /dashboard/delivery
+//     ├ QA             → /dashboard/qa
+//     └ Project Mgmt   → /dashboard/project-management  (stub)
+//   Development        → /dashboard/development
+//     ├ UCP            → /dashboard/ucp
+//     ├ SSOC           → /dashboard/ssoc
+//     └ Enterprise     → /dashboard/enterprise
+//   IT/Ops             → /dashboard/it-ops
+//     └ Prod Support   → /dashboard/prod-support
+//   Sales              → /dashboard/sales
+//     └ Marketing      → /dashboard/marketing
+//   Settings           → /dashboard/settings  (users + prefs)
+
+const ALL_SECTIONS: NavSection[] = [
   {
     id: "executive-summary",
     label: "Executive Summary",
-    path: "/dashboard/executive-summary",
     icon: <LayoutDashboard size={14} />,
+    path: "/dashboard/executive-summary",
     roles: ["executive", "company", "admin"],
-  },
-  {
-    id: "financials",
-    label: "Financials",
-    path: "/dashboard/financials",
-    icon: <DollarSign size={14} />,
-    roles: ["executive", "company", "admin"],
+    subTabs: [
+      {
+        id: "financials",
+        label: "Financials",
+        path: "/dashboard/financials",
+        roles: ["executive", "company", "admin"],
+      },
+    ],
   },
   {
     id: "delivery",
     label: "Delivery",
-    path: "/dashboard/delivery",
     icon: <PackageCheck size={14} />,
+    path: "/dashboard/delivery",
     roles: ["executive", "company", "admin"],
+    subTabs: [
+      {
+        id: "qa",
+        label: "QA",
+        path: "/dashboard/qa",
+        roles: ["executive", "company", "admin", "qa"],
+      },
+      {
+        id: "project-management",
+        label: "Project Management",
+        path: "/dashboard/project-management",
+        roles: ["executive", "company", "admin"],
+      },
+    ],
   },
   {
     id: "development",
     label: "Development",
-    path: "/dashboard/development",
     icon: <Cpu size={14} />,
+    path: "/dashboard/development",
     roles: ["executive", "company", "admin"],
+    subTabs: [
+      {
+        id: "ucp",
+        label: "UCP",
+        path: "/dashboard/ucp",
+        roles: ["executive", "company", "admin"],
+      },
+      {
+        id: "ssoc",
+        label: "SSOC",
+        path: "/dashboard/ssoc",
+        roles: ["executive", "company", "admin"],
+      },
+      {
+        id: "enterprise",
+        label: "Enterprise",
+        path: "/dashboard/enterprise",
+        roles: ["executive", "company", "admin"],
+      },
+    ],
   },
   {
     id: "it-ops",
     label: "IT / Ops",
+    icon: <Server size={14} />,
     path: "/dashboard/it-ops",
-    icon: <Settings size={14} />,
     roles: ["executive", "company", "admin"],
-  },
-  {
-    id: "qa",
-    label: "QA",
-    path: "/dashboard/qa",
-    icon: <ShieldCheck size={14} />,
-    roles: ["executive", "company", "admin", "qa"],
-  },
-  {
-    id: "csm",
-    label: "CSM",
-    path: "/dashboard/csm",
-    icon: <Headphones size={14} />,
-    roles: ["executive", "company", "admin", "csm"],
+    subTabs: [
+      {
+        id: "prod-support",
+        label: "Prod Support",
+        path: "/dashboard/prod-support",
+        roles: ["executive", "company", "admin"],
+      },
+    ],
   },
   {
     id: "sales",
     label: "Sales",
-    path: "/dashboard/sales",
     icon: <TrendingUp size={14} />,
+    path: "/dashboard/sales",
     roles: ["executive", "company", "admin", "sales_marketing"],
+    subTabs: [
+      {
+        id: "marketing",
+        label: "Marketing",
+        path: "/dashboard/marketing",
+        roles: ["executive", "company", "admin", "sales_marketing"],
+      },
+      {
+        id: "csm",
+        label: "CSM",
+        path: "/dashboard/csm",
+        roles: ["executive", "company", "admin", "csm"],
+      },
+    ],
   },
   {
-    id: "marketing",
-    label: "Marketing",
-    path: "/dashboard/marketing",
-    icon: <Megaphone size={14} />,
-    roles: ["executive", "company", "admin", "sales_marketing"],
-  },
-  {
-    id: "users",
-    label: "Users",
-    path: "/dashboard/users",
-    icon: <Users size={14} />,
-    roles: ["executive", "admin"],
+    id: "settings",
+    label: "Settings",
+    icon: <Settings size={14} />,
+    path: "/dashboard/settings",
+    roles: ["executive", "company", "admin", "qa", "sales_marketing", "csm", "user"],
+    subTabs: [
+      {
+        id: "users",
+        label: "User Management",
+        path: "/dashboard/users",
+        roles: ["executive", "admin"],
+      },
+      {
+        id: "notification-preferences",
+        label: "Notifications",
+        path: "/dashboard/notification-preferences",
+        roles: ["executive", "company", "admin", "qa", "sales_marketing", "csm", "user"],
+      },
+    ],
   },
 ];
 
-// ─── Role display config — Data Oceans light palette ─────────────────────────
+// ─── Role display config ──────────────────────────────────────────────────────
 
 const ROLE_CONFIG: Record<AppRole, { label: string; color: string }> = {
   executive:       { label: "Executive",        color: "bg-[#134C93]/10 text-[#134C93] border-[#134C93]/25" },
@@ -130,7 +210,7 @@ const ROLE_CONFIG: Record<AppRole, { label: string; color: string }> = {
   user:            { label: "User",              color: "bg-gray-100 text-gray-600 border-gray-200" },
 };
 
-// ─── Duo Status Badge ────────────────────────────────────────────────────────
+// ─── Duo Status Badge ─────────────────────────────────────────────────────────
 
 function DuoStatusBadge() {
   const { data } = trpc.auth.duoStatus.useQuery(undefined, {
@@ -174,7 +254,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     },
   });
 
-  // Close profile dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
@@ -199,15 +278,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const role = (effectiveUser.role ?? "user") as AppRole;
   const roleConfig = ROLE_CONFIG[role] ?? ROLE_CONFIG.user;
-  const visibleTabs = ALL_TABS.filter((t) => t.roles.includes(role));
 
-  // Redirect /dashboard root to first visible tab
-  if ((location === "/dashboard" || location === "/dashboard/") && visibleTabs.length > 0) {
-    navigate(visibleTabs[0].path, { replace: true });
+  // Filter sections and sub-tabs by role
+  const visibleSections = ALL_SECTIONS
+    .filter((s) => s.roles.includes(role))
+    .map((s) => ({
+      ...s,
+      subTabs: s.subTabs?.filter((st) => st.roles.includes(role)),
+    }));
+
+  // Redirect /dashboard root to first visible section's path
+  if ((location === "/dashboard" || location === "/dashboard/") && visibleSections.length > 0) {
+    navigate(visibleSections[0].path ?? visibleSections[0].subTabs?.[0]?.path ?? "/login", { replace: true });
     return null;
   }
 
-  const activeTabId = ALL_TABS.find((t) => location.startsWith(t.path))?.id ?? "";
+  // Determine active section — match by path prefix
+  const allSubTabPaths = ALL_SECTIONS.flatMap((s) => s.subTabs?.map((st) => ({ ...st, sectionId: s.id })) ?? []);
+
+  const activeSection = visibleSections.find((s) => {
+    if (s.path && location.startsWith(s.path)) return true;
+    return s.subTabs?.some((st) => location.startsWith(st.path));
+  });
+
+  // Active sub-tab within the current section
+  const activeSubTabId = activeSection?.subTabs?.find((st) => location.startsWith(st.path))?.id ?? "";
 
   const initials = (effectiveUser.name ?? effectiveUser.email ?? "U")
     .split(" ")
@@ -225,142 +320,189 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
+  const hasSubTabs = (activeSection?.subTabs?.length ?? 0) > 0;
+
   return (
     <div className="min-h-screen bg-[#F0F4F8] flex flex-col">
-      {/* ── Top header ─────────────────────────────────────────────────────── */}
-      <header className="h-14 border-b border-[#E2E8F0] bg-white flex items-center px-4 gap-3 shrink-0 z-20 sticky top-0 shadow-sm">
 
-        {/* Logo — DataOceans logo + "The Wheelhouse" wordmark */}
-        <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0 group">
-          <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
-            alt="DataOceans"
-            className="h-6 w-auto object-contain"
-          />
-          <div className="h-4 w-px bg-[#E2E8F0] hidden sm:block" />
-          <div className="hidden sm:flex items-center gap-1.5">
-            <Anchor size={13} className="text-[#018365]" />
-            <span className="text-sm font-bold text-[#141A2B] tracking-tight">
-              The Wheelhouse
-            </span>
-          </div>
-        </Link>
+      {/* ── Primary header ──────────────────────────────────────────────────── */}
+      <header className="border-b border-[#E2E8F0] bg-white shrink-0 z-20 sticky top-0 shadow-sm">
 
-        <div className="h-5 w-px bg-[#E2E8F0] shrink-0" />
+        {/* Top row: logo + primary tabs + right controls */}
+        <div className="h-14 flex items-center px-4 gap-3">
 
-        {/* Horizontal scrollable tab strip */}
-        <nav className="flex-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-          <div className="flex items-end gap-0 min-w-max h-14">
-            {visibleTabs.map((tab) => {
-              const isActive = tab.id === activeTabId;
-              return (
-                <Link
-                  key={tab.id}
-                  href={tab.path}
-                  className={cn(
-                    "relative flex items-center gap-1.5 px-3 h-full",
-                    "text-[0.8125rem] font-semibold transition-all duration-150 whitespace-nowrap select-none",
-                    "border-b-2",
-                    isActive
-                      ? "text-[#134C93] border-[#134C93]"
-                      : "text-[#6E7791] border-transparent hover:text-[#134C93] hover:border-[#134C93]/30"
-                  )}
-                >
-                  <span className={cn(
-                    "transition-colors",
-                    isActive ? "text-[#134C93]" : "text-[#6E7791]"
-                  )}>
-                    {tab.icon}
-                  </span>
-                  {tab.label}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+          {/* Logo */}
+          <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0 group">
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
+              alt="DataOceans"
+              className="h-6 w-auto object-contain"
+            />
+            <div className="h-4 w-px bg-[#E2E8F0] hidden sm:block" />
+            <div className="hidden sm:flex items-center gap-1.5">
+              <Anchor size={13} className="text-[#018365]" />
+              <span className="text-sm font-bold text-[#141A2B] tracking-tight">
+                The Wheelhouse
+              </span>
+            </div>
+          </Link>
 
-        {/* Right: notification bell + Duo status + role badge + profile */}
-        <div className="flex items-center gap-2 shrink-0">
-          <NotificationBell />
-          <DuoStatusBadge />
+          <div className="h-5 w-px bg-[#E2E8F0] shrink-0" />
 
-          <span
-            className={cn(
+          {/* Primary tab strip */}
+          <nav className="flex-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            <div className="flex items-end gap-0 min-w-max h-14">
+              {visibleSections.map((section) => {
+                const isActive = activeSection?.id === section.id;
+                return (
+                  <Link
+                    key={section.id}
+                    href={section.path ?? section.subTabs?.[0]?.path ?? "#"}
+                    className={cn(
+                      "relative flex items-center gap-1.5 px-3.5 h-full",
+                      "text-[0.8125rem] font-semibold transition-all duration-150 whitespace-nowrap select-none",
+                      "border-b-2",
+                      isActive
+                        ? "text-[#134C93] border-[#134C93] bg-[#134C93]/[0.03]"
+                        : "text-[#6E7791] border-transparent hover:text-[#134C93] hover:border-[#134C93]/30 hover:bg-[#F0F4F8]/60"
+                    )}
+                  >
+                    <span className={cn(
+                      "transition-colors",
+                      isActive ? "text-[#134C93]" : "text-[#9BA3B8]"
+                    )}>
+                      {section.icon}
+                    </span>
+                    {section.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* Right controls */}
+          <div className="flex items-center gap-2 shrink-0">
+            <NotificationBell />
+            <DuoStatusBadge />
+
+            <span className={cn(
               "hidden sm:inline-flex items-center px-2 py-0.5 rounded-full",
               "text-[10px] font-semibold border",
               roleConfig.color
-            )}
-          >
-            {roleConfig.label}
-          </span>
+            )}>
+              {roleConfig.label}
+            </span>
 
-          {/* Profile dropdown */}
-          <div className="relative" ref={profileRef}>
-            <button
-              onClick={() => setProfileOpen((v) => !v)}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-[#F0F4F8] transition-colors"
-            >
-              <div className="w-7 h-7 rounded-full bg-[#134C93] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-                {initials}
-              </div>
-              <span className="text-xs text-[#141A2B] font-medium hidden md:block max-w-[120px] truncate">
-                {effectiveUser.name ?? effectiveUser.email}
-              </span>
-              <ChevronDown
-                size={11}
-                className={cn("text-[#6E7791] transition-transform duration-150", profileOpen && "rotate-180")}
-              />
-            </button>
+            {/* Profile dropdown */}
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setProfileOpen((v) => !v)}
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-[#F0F4F8] transition-colors"
+              >
+                <div className="w-7 h-7 rounded-full bg-[#134C93] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                  {initials}
+                </div>
+                <span className="text-xs text-[#141A2B] font-medium hidden md:block max-w-[120px] truncate">
+                  {effectiveUser.name ?? effectiveUser.email}
+                </span>
+                <ChevronDown
+                  size={11}
+                  className={cn("text-[#6E7791] transition-transform duration-150", profileOpen && "rotate-180")}
+                />
+              </button>
 
-            {profileOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-60 bg-white border border-[#E2E8F0] rounded-xl shadow-lg shadow-[#141A2B]/10 py-1.5 z-50">
-                <div className="px-3 py-2.5 border-b border-[#E2E8F0]">
-                  <p className="text-xs font-semibold text-[#141A2B] truncate">
-                    {effectiveUser.name ?? "User"}
-                  </p>
-                  <p className="text-[11px] text-[#6E7791] truncate mt-0.5">
-                    {effectiveUser.email}
-                  </p>
-                  <span
-                    className={cn(
+              {profileOpen && (
+                <div className="absolute right-0 top-full mt-1.5 w-60 bg-white border border-[#E2E8F0] rounded-xl shadow-lg shadow-[#141A2B]/10 py-1.5 z-50">
+                  <div className="px-3 py-2.5 border-b border-[#E2E8F0]">
+                    <p className="text-xs font-semibold text-[#141A2B] truncate">
+                      {effectiveUser.name ?? "User"}
+                    </p>
+                    <p className="text-[11px] text-[#6E7791] truncate mt-0.5">
+                      {effectiveUser.email}
+                    </p>
+                    <span className={cn(
                       "mt-2 inline-flex items-center px-1.5 py-0.5 rounded-full",
                       "text-[10px] font-semibold border",
                       roleConfig.color
-                    )}
-                  >
-                    {roleConfig.label}
-                  </span>
-                </div>
+                    )}>
+                      {roleConfig.label}
+                    </span>
+                  </div>
 
-                <div className="py-1">
-                  <button
-                    onClick={() => setProfileOpen(false)}
-                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-[#6E7791] hover:text-[#141A2B] hover:bg-[#F0F4F8] transition-colors"
-                  >
-                    <Users size={12} />
-                    Profile &amp; MFA Settings
-                  </button>
-                </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() => setProfileOpen(false)}
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-[#6E7791] hover:text-[#141A2B] hover:bg-[#F0F4F8] transition-colors"
+                    >
+                      <Users size={12} />
+                      Profile &amp; MFA Settings
+                    </button>
+                  </div>
 
-                <div className="border-t border-[#E2E8F0] pt-1">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut size={12} />
-                    Sign out
-                  </button>
+                  <div className="border-t border-[#E2E8F0] pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <LogOut size={12} />
+                      Sign out
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
+
+        {/* ── Secondary sub-tab bar (only when active section has sub-tabs) ── */}
+        {hasSubTabs && (
+          <div className="border-t border-[#E2E8F0] bg-[#F8FAFC] px-4">
+            <nav className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+              <div className="flex items-center gap-0 min-w-max h-9">
+                {/* "Overview" pill — links back to the section root */}
+                {activeSection?.path && (
+                  <Link
+                    href={activeSection.path}
+                    className={cn(
+                      "flex items-center gap-1 px-3 h-full text-[0.75rem] font-medium transition-all whitespace-nowrap select-none",
+                      "border-b-2",
+                      !activeSubTabId
+                        ? "text-[#134C93] border-[#134C93]"
+                        : "text-[#6E7791] border-transparent hover:text-[#134C93] hover:border-[#134C93]/30"
+                    )}
+                  >
+                    Overview
+                  </Link>
+                )}
+
+                {activeSection?.subTabs?.map((sub) => {
+                  const isActive = sub.id === activeSubTabId;
+                  return (
+                    <Link
+                      key={sub.id}
+                      href={sub.path}
+                      className={cn(
+                        "flex items-center gap-1 px-3 h-full text-[0.75rem] font-medium transition-all whitespace-nowrap select-none",
+                        "border-b-2",
+                        isActive
+                          ? "text-[#134C93] border-[#134C93]"
+                          : "text-[#6E7791] border-transparent hover:text-[#134C93] hover:border-[#134C93]/30"
+                      )}
+                    >
+                      {sub.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+          </div>
+        )}
+
+        {/* Blue accent rule */}
+        <div className="h-0.5 bg-gradient-to-r from-[#134C93] via-[#018365] to-[#134C93]" />
       </header>
 
-      {/* Blue accent rule below header */}
-      <div className="h-0.5 bg-gradient-to-r from-[#134C93] via-[#018365] to-[#134C93] shrink-0" />
-
-      {/* ── Page content ────────────────────────────────────────────────────── */}
+      {/* ── Page content ──────────────────────────────────────────────────────── */}
       <main className="flex-1 overflow-auto">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
           {children}

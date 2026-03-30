@@ -9,34 +9,55 @@ import DashboardLayout from "./components/DashboardLayout";
 import LoginPage from "./pages/LoginPage";
 import MfaPage from "./pages/MfaPage";
 import DuoCallbackPage from "./pages/DuoCallbackPage";
+
+// ── Tab pages ─────────────────────────────────────────────────────────────────
 import ExecutiveSummaryTab from "./pages/tabs/ExecutiveSummaryTab";
 import FinancialsTab from "./pages/tabs/FinancialsTab";
 import DeliveryTab from "./pages/tabs/DeliveryTab";
-import DevelopmentTab from "./pages/tabs/DevelopmentTab";
-import ITOpsTab from "./pages/tabs/ITOpsTab";
 import QATab from "./pages/tabs/QATab";
-import CSMTab from "./pages/tabs/CSMTab";
+import ProjectManagementTab from "./pages/tabs/ProjectManagementTab";
+import DevelopmentTab from "./pages/tabs/DevelopmentTab";
+import UCPTab from "./pages/tabs/UCPTab";
+import SSOCTab from "./pages/tabs/SSOCTab";
+import EnterpriseTab from "./pages/tabs/EnterpriseTab";
+import ITOpsTab from "./pages/tabs/ITOpsTab";
+import ProdSupportTab from "./pages/tabs/ProdSupportTab";
 import SalesTab from "./pages/tabs/SalesTab";
 import MarketingTab from "./pages/tabs/MarketingTab";
+import CSMTab from "./pages/tabs/CSMTab";
+import SettingsTab from "./pages/tabs/SettingsTab";
 import UserManagementTab from "./pages/tabs/UserManagementTab";
 import NotificationPreferencesPage from "./pages/NotificationPreferencesPage";
 import NotFound from "./pages/NotFound";
 
-// ─── RBAC access map (mirrors server/routers.ts TAB_ACCESS) ──────────────────
+// ─── RBAC access map ──────────────────────────────────────────────────────────
 
 type AppRole = "user" | "admin" | "executive" | "company" | "qa" | "sales_marketing" | "csm";
 
 const TAB_ACCESS: Record<string, AppRole[]> = {
-  "executive-summary": ["executive", "company", "admin"],
-  "financials":        ["executive", "company", "admin"],
-  "delivery":          ["executive", "company", "admin"],
-  "development":       ["executive", "company", "admin"],
-  "it-ops":            ["executive", "company", "admin"],
-  "qa":                ["executive", "company", "admin", "qa"],
-  "csm":               ["executive", "company", "admin", "csm"],
-  "sales":             ["executive", "company", "admin", "sales_marketing"],
-  "marketing":         ["executive", "company", "admin", "sales_marketing"],
-  "users":             ["executive", "admin"],
+  // Executive Summary section
+  "executive-summary":   ["executive", "company", "admin"],
+  "financials":          ["executive", "company", "admin"],
+  // Delivery section
+  "delivery":            ["executive", "company", "admin"],
+  "qa":                  ["executive", "company", "admin", "qa"],
+  "project-management":  ["executive", "company", "admin"],
+  // Development section
+  "development":         ["executive", "company", "admin"],
+  "ucp":                 ["executive", "company", "admin"],
+  "ssoc":                ["executive", "company", "admin"],
+  "enterprise":          ["executive", "company", "admin"],
+  // IT/Ops section
+  "it-ops":              ["executive", "company", "admin"],
+  "prod-support":        ["executive", "company", "admin"],
+  // Sales section
+  "sales":               ["executive", "company", "admin", "sales_marketing"],
+  "marketing":           ["executive", "company", "admin", "sales_marketing"],
+  "csm":                 ["executive", "company", "admin", "csm"],
+  // Settings section
+  "settings":            ["executive", "company", "admin", "qa", "sales_marketing", "csm", "user"],
+  "users":               ["executive", "admin"],
+  "notification-preferences": ["executive", "company", "admin", "qa", "sales_marketing", "csm", "user"],
 };
 
 // ─── RBAC Route Guard ─────────────────────────────────────────────────────────
@@ -65,12 +86,10 @@ function ProtectedRoute({
     return <Redirect to="/login" />;
   }
 
-  // Check tab-level RBAC
   if (tab && effectiveUser) {
     const allowedRoles = TAB_ACCESS[tab] ?? [];
     const userRole = (effectiveUser.role ?? "user") as AppRole;
     if (!allowedRoles.includes(userRole)) {
-      // Redirect to the user's first allowed tab
       const firstAllowed = Object.entries(TAB_ACCESS).find(([, roles]) =>
         roles.includes(userRole)
       );
@@ -97,78 +116,108 @@ function Router() {
       {/* /dashboard root — DashboardLayout handles redirect to first allowed tab */}
       <Route path="/dashboard">
         <ProtectedRoute>
-          <DashboardLayout>
-            <ExecutiveSummaryTab />
-          </DashboardLayout>
+          <DashboardLayout><ExecutiveSummaryTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
+      {/* ── Executive Summary section ─────────────────────────────────────── */}
       <Route path="/dashboard/executive-summary">
         <ProtectedRoute tab="executive-summary">
           <DashboardLayout><ExecutiveSummaryTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
-
       <Route path="/dashboard/financials">
         <ProtectedRoute tab="financials">
           <DashboardLayout><FinancialsTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
+      {/* ── Delivery section ──────────────────────────────────────────────── */}
       <Route path="/dashboard/delivery">
         <ProtectedRoute tab="delivery">
           <DashboardLayout><DeliveryTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
-
-      <Route path="/dashboard/development">
-        <ProtectedRoute tab="development">
-          <DashboardLayout><DevelopmentTab /></DashboardLayout>
-        </ProtectedRoute>
-      </Route>
-
-      <Route path="/dashboard/it-ops">
-        <ProtectedRoute tab="it-ops">
-          <DashboardLayout><ITOpsTab /></DashboardLayout>
-        </ProtectedRoute>
-      </Route>
-
       <Route path="/dashboard/qa">
         <ProtectedRoute tab="qa">
           <DashboardLayout><QATab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
+      <Route path="/dashboard/project-management">
+        <ProtectedRoute tab="project-management">
+          <DashboardLayout><ProjectManagementTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
 
+      {/* ── Development section ───────────────────────────────────────────── */}
+      <Route path="/dashboard/development">
+        <ProtectedRoute tab="development">
+          <DashboardLayout><DevelopmentTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/ucp">
+        <ProtectedRoute tab="ucp">
+          <DashboardLayout><UCPTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/ssoc">
+        <ProtectedRoute tab="ssoc">
+          <DashboardLayout><SSOCTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/enterprise">
+        <ProtectedRoute tab="enterprise">
+          <DashboardLayout><EnterpriseTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+
+      {/* ── IT/Ops section ────────────────────────────────────────────────── */}
+      <Route path="/dashboard/it-ops">
+        <ProtectedRoute tab="it-ops">
+          <DashboardLayout><ITOpsTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/prod-support">
+        <ProtectedRoute tab="prod-support">
+          <DashboardLayout><ProdSupportTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+
+      {/* ── Sales section ─────────────────────────────────────────────────── */}
+      <Route path="/dashboard/sales">
+        <ProtectedRoute tab="sales">
+          <DashboardLayout><SalesTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/marketing">
+        <ProtectedRoute tab="marketing">
+          <DashboardLayout><MarketingTab /></DashboardLayout>
+        </ProtectedRoute>
+      </Route>
       <Route path="/dashboard/csm">
         <ProtectedRoute tab="csm">
           <DashboardLayout><CSMTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
-      <Route path="/dashboard/sales">
-        <ProtectedRoute tab="sales">
-          <DashboardLayout><SalesTab /></DashboardLayout>
+      {/* ── Settings section ──────────────────────────────────────────────── */}
+      <Route path="/dashboard/settings">
+        <ProtectedRoute tab="settings">
+          <DashboardLayout><SettingsTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
-
-      <Route path="/dashboard/marketing">
-        <ProtectedRoute tab="marketing">
-          <DashboardLayout><MarketingTab /></DashboardLayout>
-        </ProtectedRoute>
-      </Route>
-
       <Route path="/dashboard/users">
         <ProtectedRoute tab="users">
           <DashboardLayout><UserManagementTab /></DashboardLayout>
         </ProtectedRoute>
       </Route>
-
       <Route path="/dashboard/notification-preferences">
-        <ProtectedRoute>
+        <ProtectedRoute tab="notification-preferences">
           <DashboardLayout><NotificationPreferencesPage /></DashboardLayout>
         </ProtectedRoute>
       </Route>
 
+      {/* ── Root redirect ─────────────────────────────────────────────────── */}
       <Route path="/">
         {effectiveAuth ? <Redirect to="/dashboard" /> : <Redirect to="/login" />}
       </Route>

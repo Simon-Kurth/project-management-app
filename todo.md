@@ -242,4 +242,14 @@
 - [x] Traced: loginWithPassword sets cookie with demo openId (e.g. demo-executive), but auth.me called db.getUserByOpenId which threw DB connection error → returned null → navigate never fired
 - [x] Fixed: sdk.ts authenticateRequest now has a demo fast-path — if openId starts with "demo-" it resolves from in-memory demoUsers store, bypassing the DB entirely
 - [x] 78 tests passing, 0 TypeScript errors
+- [x] Checkpoint saved
+
+## Navigation Revamp
+
+- [x] Audit current nav structure and existing page components
+- [x] Rewrite DashboardLayout with two-tier nav: primary bar (6 sections) + contextual sub-tab bar
+- [x] Update App.tsx routes for all new paths (18 total routes)
+- [x] Create stub pages: ProjectManagementTab, UCPTab, SSOCTab, EnterpriseTab, ProdSupportTab, SettingsTab
+- [x] Settings section consolidates User Management + Notification Preferences with role-gated links
+- [x] 78 tests passing, 0 TypeScript errors
 - [ ] Checkpoint saved
