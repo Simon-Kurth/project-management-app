@@ -146,7 +146,13 @@ export async function query<T = Record<string, unknown>>(
   text: string,
   params?: Record<string, { type: sql.ISqlTypeFactory | sql.ISqlType; value: unknown }>,
 ): Promise<T[]> {
-  const pool = await getPool();
+  let pool: sql.ConnectionPool | null;
+  try {
+    pool = await getPool();
+  } catch {
+    // DB not reachable — return empty result set so callers can fall back gracefully
+    return [];
+  }
   if (!pool) return [];
 
   const request = pool.request();
@@ -167,7 +173,13 @@ export async function execute(
   text: string,
   params?: Record<string, { type: sql.ISqlTypeFactory | sql.ISqlType; value: unknown }>,
 ): Promise<number> {
-  const pool = await getPool();
+  let pool: sql.ConnectionPool | null;
+  try {
+    pool = await getPool();
+  } catch {
+    // DB not reachable — return 0 rows affected so callers can fall back gracefully
+    return 0;
+  }
   if (!pool) return 0;
 
   const request = pool.request();
@@ -188,7 +200,12 @@ export async function insertGetId(
   text: string,
   params?: Record<string, { type: sql.ISqlTypeFactory | sql.ISqlType; value: unknown }>,
 ): Promise<number | null> {
-  const pool = await getPool();
+  let pool: sql.ConnectionPool | null;
+  try {
+    pool = await getPool();
+  } catch {
+    return null;
+  }
   if (!pool) return null;
 
   const request = pool.request();
