@@ -227,4 +227,12 @@
 - [x] Audited LoginPage: "Sign in with Duo MFA" was a misleading label — Duo is a server-side second step, not a standalone link
 - [x] Fixed button label to plain "Sign in"; removed false "Protected by Duo MFA" subtitle and footer when Duo is not configured
 - [x] Confirmed demo fallback working: loginWithPassword returns HTTP 200 with valid user when DB is down
+- [x] Checkpoint saved
+
+## Demo Sign-In Fix
+
+- [x] Diagnosed: demo cards only filled fields, did not submit; onSuccess also guarded on data.user which could silently skip navigation
+- [x] Fixed: demo cards now call handleDemoLogin() which fills fields AND immediately fires loginMutation; cards disabled while loading
+- [x] Fixed: onSuccess no longer gates on data.user — session cookie is always set by server so navigate always fires
+- [x] Added onSettled to always clear loading state even on error
 - [ ] Checkpoint saved

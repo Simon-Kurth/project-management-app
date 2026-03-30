@@ -50,10 +50,14 @@ export default function LoginPage() {
     onSuccess: async (data) => {
       if (data.requiresDuo && data.duoAuthUrl) {
         window.location.href = data.duoAuthUrl;
-      } else if (data.user) {
+      } else {
+        // Session cookie is set by the server — invalidate auth cache and navigate
         await utils.auth.me.invalidate();
         navigate("/dashboard");
       }
+    },
+    onSettled: () => {
+      setLoading(false);
     },
     onError: (err) => {
       setLoading(false);
@@ -85,7 +89,16 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
+    setErrorMsg(null);
     loginMutation.mutate({ email, password });
+  };
+
+  const handleDemoLogin = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setLoading(true);
+    setErrorMsg(null);
+    loginMutation.mutate({ email: demoEmail, password: demoPassword });
   };
 
   const handleEntraLogin = () => {
@@ -328,8 +341,9 @@ export default function LoginPage() {
                   <button
                     key={u.email}
                     type="button"
-                    onClick={() => { setEmail(u.email); setPassword(u.password); }}
-                    className="text-left p-2.5 rounded-lg bg-white border border-[#E2E8F0] hover:border-[#134C93]/40 hover:bg-[#F0F4F8] transition-all"
+                    disabled={loading}
+                    onClick={() => handleDemoLogin(u.email, u.password)}
+                    className="text-left p-2.5 rounded-lg bg-white border border-[#E2E8F0] hover:border-[#134C93]/40 hover:bg-[#F0F4F8] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <p className="text-xs font-semibold text-[#141A2B]">{u.label}</p>
                     <p className="text-[11px] text-[#6E7791]">{u.desc}</p>
