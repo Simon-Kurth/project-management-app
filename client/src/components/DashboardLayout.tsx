@@ -295,11 +295,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       subTabs: s.subTabs?.filter((st) => st.roles.includes(role)),
     }));
 
-  // Redirect /dashboard root to first visible section's path
-  if ((location === "/dashboard" || location === "/dashboard/") && visibleSections.length > 0) {
-    navigate(visibleSections[0].path ?? visibleSections[0].subTabs?.[0]?.path ?? "/login", { replace: true });
-    return null;
-  }
+  // Redirect /dashboard root to first visible section's path.
+  // Must be done in useEffect — calling navigate() during render triggers
+  // "Cannot update a component while rendering a different component".
+  const redirectTarget =
+    (location === "/dashboard" || location === "/dashboard/") && visibleSections.length > 0
+      ? (visibleSections[0].path ?? visibleSections[0].subTabs?.[0]?.path ?? "/login")
+      : null;
+
+  useEffect(() => {
+    if (redirectTarget) navigate(redirectTarget, { replace: true });
+  }, [redirectTarget]);
+
+  if (redirectTarget) return null;
 
   // Determine active section — match by path prefix
   const allSubTabPaths = ALL_SECTIONS.flatMap((s) => s.subTabs?.map((st) => ({ ...st, sectionId: s.id })) ?? []);

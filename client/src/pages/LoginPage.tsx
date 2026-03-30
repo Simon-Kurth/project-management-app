@@ -77,10 +77,13 @@ export default function LoginPage() {
     },
   });
 
-  if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
-  }
+  // Never call navigate() during render — wrap in useEffect to avoid
+  // "Cannot update a component while rendering a different component" error
+  useEffect(() => {
+    if (isAuthenticated) navigate("/dashboard");
+  }, [isAuthenticated]);
+
+  if (isAuthenticated) return null;
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
