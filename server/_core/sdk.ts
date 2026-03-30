@@ -6,6 +6,7 @@ import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../db";
 import * as db from "../db";
+import { getDemoUser as getDemoUserByEmail } from "../demoUsers";
 import { ENV } from "./env";
 import type {
   ExchangeTokenRequest,
@@ -267,6 +268,24 @@ class SDKServer {
     }
 
     const sessionUserId = session.openId;
+
+    // ── Demo user fast-path ────────────────────────────────────────────────
+    // When the session openId starts with "demo-" we resolve from the in-memory
+    // store so the app works without a connected SQL Server database.
+    if (sessionUserId.startsWith("demo-")) {
+      // Map openId back to email to look up the demo user
+      const demoEmailMap: Record<string, string> = {
+        "demo-executive":  "executive@demo.com",
+        "demo-qa":         "qa@demo.com",
+        "demo-sales":      "salesmarketing@demo.com",
+        "demo-csm":        "csm@demo.com",
+      };
+      const email = demoEmailMap[sessionUserId];
+      const demoUser = email ? getDemoUserByEmail(email) : undefined;
+      if (demoUser) return demoUser;
+      throw ForbiddenError("Demo user not found");
+    }
+
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 

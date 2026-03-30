@@ -235,4 +235,11 @@
 - [x] Fixed: demo cards now call handleDemoLogin() which fills fields AND immediately fires loginMutation; cards disabled while loading
 - [x] Fixed: onSuccess no longer gates on data.user — session cookie is always set by server so navigate always fires
 - [x] Added onSettled to always clear loading state even on error
+- [x] Checkpoint saved
+
+## Login Redirect Fix (stuck on login screen)
+
+- [x] Traced: loginWithPassword sets cookie with demo openId (e.g. demo-executive), but auth.me called db.getUserByOpenId which threw DB connection error → returned null → navigate never fired
+- [x] Fixed: sdk.ts authenticateRequest now has a demo fast-path — if openId starts with "demo-" it resolves from in-memory demoUsers store, bypassing the DB entirely
+- [x] 78 tests passing, 0 TypeScript errors
 - [ ] Checkpoint saved
