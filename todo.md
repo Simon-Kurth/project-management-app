@@ -220,4 +220,11 @@
 - [x] Add in-memory DEMO_USERS store in server/demoUsers.ts (pre-hashed passwords, all 4 demo roles)
 - [x] Update loginWithPassword to catch SERVICE_UNAVAILABLE and fall back to demo user store
 - [x] Demo sessions use same JWT cookie flow — no DB writes needed; Duo and audit log writes skipped for demo users
+- [x] Checkpoint saved
+
+## Duo MFA Link Fix
+
+- [x] Audited LoginPage: "Sign in with Duo MFA" was a misleading label — Duo is a server-side second step, not a standalone link
+- [x] Fixed button label to plain "Sign in"; removed false "Protected by Duo MFA" subtitle and footer when Duo is not configured
+- [x] Confirmed demo fallback working: loginWithPassword returns HTTP 200 with valid user when DB is down
 - [ ] Checkpoint saved

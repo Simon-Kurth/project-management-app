@@ -140,7 +140,7 @@ export default function LoginPage() {
           <div className="mt-8 space-y-3">
             {[
               "Microsoft Entra ID SSO with corporate credentials",
-              "Duo Security MFA as second factor",
+              "Duo Security MFA (when configured)",
               "Role-based access control across 9 departments",
               "Audit logging for every action",
             ].map((f) => (
@@ -189,12 +189,7 @@ export default function LoginPage() {
                     {" · "}
                     <span className="text-[#018365] font-semibold">Microsoft SSO + Duo MFA</span>
                   </>
-                ) : (
-                  <>
-                    {" · "}
-                    <span className="text-[#018365] font-semibold">Protected by Duo MFA</span>
-                  </>
-                )}
+                ) : null}
               </p>
             </div>
 
@@ -298,7 +293,7 @@ export default function LoginPage() {
                 ) : (
                   <span className="flex items-center gap-2">
                     <Shield className="w-4 h-4" />
-                    {entraConfigured ? "Sign in (demo)" : "Sign in with Duo MFA"}
+                    Sign in
                   </span>
                 )}
               </Button>
@@ -352,10 +347,7 @@ export default function LoginPage() {
                 <span className="text-[#018365] font-semibold">Duo Security</span>
               </>
             ) : (
-              <>
-                Two-factor authentication powered by{" "}
-                <span className="text-[#018365] font-semibold">Duo Security</span>
-              </>
+              <>Internal use only · Demo mode active</>
             )}
           </p>
         </div>
