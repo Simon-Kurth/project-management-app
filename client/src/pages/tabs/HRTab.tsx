@@ -138,65 +138,53 @@ export default function HRTab() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeAdoption | null>(null);
 
-  // Fetch from tRPC; fall back to demo data when the query fails (DB not configured)
+  // Fetch from tRPC; fall back to demo data when the query fails (DB not configured).
+  // NOTE: error is intentionally ignored — we always have DEMO_EMPLOYEES as fallback.
   const { data: apiData, isLoading } = trpc.hr.aiAdoption.useQuery(undefined, {
     retry: false,
-    onError: () => { /* silently fall back to demo data */ },
-  } as Parameters<typeof trpc.hr.aiAdoption.useQuery>[1]);
+  });
 
+  // Map API rows (flat DB shape) → EmployeeAdoption shape, or use DEMO_EMPLOYEES as fallback.
+  // This useMemo MUST stay above any early returns to satisfy Rules of Hooks.
   const employees: EmployeeAdoption[] = useMemo(() => {
-    const src: unknown[] = (apiData as unknown[]) ?? DEMO_EMPLOYEES;
+    const src: unknown[] = (apiData as unknown[] | undefined) ?? DEMO_EMPLOYEES;
     return src.map((r) => {
-      // Handle both the tRPC shape (flat fields) and the local DEMO shape
       const row = r as Record<string, unknown>;
       if ("dimToolUsage" in row) {
-        // tRPC / DB row
-        const row = r as typeof DEMO_EMPLOYEES[0] & {
-          dimToolUsage: number; dimPromptQuality: number; dimAutomation: number;
-          dimTraining: number; dimCollaboration: number; dimInnovation: number;
-          employeeName: string; jobTitle: string; lastActiveAt: Date | null;
-        };
-        const delta = row.trendDelta;
+        // DB / tRPC shape — remap to EmployeeAdoption
+        const delta = (row.trendDelta as number) ?? 0;
         return {
-          id: row.id,
-          name: row.employeeName,
-          department: row.department,
-          role: row.jobTitle,
-          overallScore: row.overallScore,
+          id: row.id as number,
+          name: row.employeeName as string,
+          department: row.department as string,
+          role: row.jobTitle as string,
+          overallScore: row.overallScore as number,
           trend: (delta > 0 ? "up" : delta < 0 ? "down" : "flat") as "up" | "down" | "flat",
           trendDelta: delta,
-          toolsUsed: row.toolsUsed,
-          promptsPerWeek: row.promptsPerWeek,
-          automationsCreated: row.automationsCreated,
-          trainingCompleted: row.dimTraining,
+          toolsUsed: row.toolsUsed as number,
+          promptsPerWeek: row.promptsPerWeek as number,
+          automationsCreated: row.automationsCreated as number,
+          trainingCompleted: row.dimTraining as number,
           dimensions: {
-            toolUsage: row.dimToolUsage,
-            promptQuality: row.dimPromptQuality,
-            automation: row.dimAutomation,
-            training: row.dimTraining,
-            collaboration: row.dimCollaboration,
-            innovation: row.dimInnovation,
+            toolUsage: row.dimToolUsage as number,
+            promptQuality: row.dimPromptQuality as number,
+            automation: row.dimAutomation as number,
+            training: row.dimTraining as number,
+            collaboration: row.dimCollaboration as number,
+            innovation: row.dimInnovation as number,
           },
           tier: row.tier as EmployeeAdoption["tier"],
           lastActive: row.lastActiveAt
-            ? new Date(row.lastActiveAt).toLocaleDateString()
+            ? new Date(row.lastActiveAt as string | Date).toLocaleDateString()
             : "Unknown",
         } satisfies EmployeeAdoption;
       }
-      // Already in EmployeeAdoption shape (DEMO_EMPLOYEES)
+      // Already in EmployeeAdoption shape (DEMO_EMPLOYEES fallback)
       return r as EmployeeAdoption;
     });
   }, [apiData]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // ── Derived stats ──
+  // ── Derived stats ── (all useMemo hooks MUST be before any conditional returns)
   const stats = useMemo(() => {
     const total = employees.length;
     const avgScore = Math.round(employees.reduce((s, e) => s + e.overallScore, 0) / total);
@@ -268,7 +256,10 @@ export default function HRTab() {
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">Employee-level AI tool adoption scores across all departments</p>
         </div>
-        <Badge variant="outline" className="text-xs text-slate-500">Updated daily</Badge>
+        <div className="flex items-center gap-2">
+          {isLoading && <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />}
+          <Badge variant="outline" className="text-xs text-slate-500">Updated daily</Badge>
+        </div>
       </div>
 
       {/* ── KPI strip ── */}

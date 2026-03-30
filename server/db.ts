@@ -654,7 +654,13 @@ export interface AiAdoptionScore {
 }
 
 export async function getAiAdoptionScores(): Promise<AiAdoptionScore[]> {
-  const pool = await getPool();
+  let pool;
+  try {
+    pool = await getPool();
+  } catch {
+    // DB not reachable — caller will fall back to mock data
+    return [];
+  }
   if (!pool) return [];
   const result = await pool.request().query<AiAdoptionScore>(`
     SELECT id, userId, employeeName, department, jobTitle,
