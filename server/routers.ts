@@ -104,19 +104,29 @@ export const appRouter = router({
         const ua = ctx.req.headers["user-agent"] || "unknown";
 
         // ── User lookup: try DB first, fall back to in-memory demo store ────────
+        // Note: since query() now swallows connection errors and returns [],
+        // getUserByEmail() returns undefined (not throws) when the DB is down.
+        // We must check the demo store both when DB throws AND when it returns null.
         let user;
         let usingDemoFallback = false;
         try {
           user = await withDbError(() => getUserByEmail(input.email));
         } catch (err: unknown) {
-          // DB is unreachable — check if this is a demo account
+          // DB threw a connection error — check demo store before surfacing the error
           const demo = getDemoUser(input.email);
-          if (!demo) {
-            // Not a demo account and DB is down — surface the DB error
-            throw err;
-          }
+          if (!demo) throw err;
           user = demo;
           usingDemoFallback = true;
+        }
+
+        // DB returned no user (either DB is down and returned [] silently, or user
+        // genuinely doesn't exist) — check demo store as a second chance
+        if (!user) {
+          const demo = getDemoUser(input.email);
+          if (demo) {
+            user = demo;
+            usingDemoFallback = true;
+          }
         }
 
         if (!user || !user.isActive || !user.passwordHash) {
