@@ -269,3 +269,8 @@
 - [x] Wire HRTab to tRPC hr.aiAdoption query (falls back to DEMO_EMPLOYEES when DB unavailable)
 - [x] 78 tests passing, 0 TypeScript errors
 - [x] Checkpoint saved
+
+## Role Mapping Updates
+
+- [x] Map QA role to Delivery tab (section roles + QA sub-tab already had qa)
+- [x] Map CSM role to CSM sub-tab (Sales section roles updated to include csm)

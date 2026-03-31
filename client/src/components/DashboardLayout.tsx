@@ -104,7 +104,7 @@ const ALL_SECTIONS: NavSection[] = [
     label: "Delivery",
     icon: <PackageCheck size={14} />,
     path: "/dashboard/delivery",
-    roles: ["executive", "company", "admin"],
+    roles: ["executive", "company", "admin", "qa"],
     subTabs: [
       {
         id: "qa",
@@ -167,7 +167,7 @@ const ALL_SECTIONS: NavSection[] = [
     label: "Sales",
     icon: <TrendingUp size={14} />,
     path: "/dashboard/sales",
-    roles: ["executive", "company", "admin", "sales_marketing"],
+    roles: ["executive", "company", "admin", "sales_marketing", "csm"],
     subTabs: [
       {
         id: "marketing",
