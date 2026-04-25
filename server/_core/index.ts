@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { validateEnv } from "./env";
+validateEnv();
 import express from "express";
 import { createServer } from "http";
 import net from "net";

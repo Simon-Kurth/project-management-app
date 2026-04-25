@@ -8,3 +8,17 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
 };
+
+const REQUIRED_ENV_VARS: Array<{ key: keyof typeof ENV; envVar: string }> = [
+  { key: "cookieSecret", envVar: "JWT_SECRET" },
+  { key: "appId",        envVar: "VITE_APP_ID" },
+  { key: "oAuthServerUrl", envVar: "OAUTH_SERVER_URL" },
+];
+
+export function validateEnv(): void {
+  const missing = REQUIRED_ENV_VARS.filter(({ key }) => !ENV[key]);
+  if (missing.length > 0) {
+    const list = missing.map(({ envVar }) => `  - ${envVar}`).join("\n");
+    throw new Error(`Server startup failed — missing required environment variables:\n${list}`);
+  }
+}
