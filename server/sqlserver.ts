@@ -3,12 +3,21 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Microsoft SQL Server connection pool helper using the `mssql` (tedious) driver.
  *
- * Connection string format (set DATABASE_URL env var):
- *   Server=your-server.database.windows.net;Database=wheelhouse;
- *   User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=false;
+ * This app runs SQL Server on the same host as the application server.
  *
- *   Or as a URL:
- *   mssql://username:password@your-server.database.windows.net/wheelhouse
+ * Recommended DATABASE_URL for a local SQL Server instance:
+ *   Server=localhost;Database=project_management;User Id=sa;Password=YourPassword;
+ *   Encrypt=false;TrustServerCertificate=true;
+ *
+ *   Or using a named instance:
+ *   Server=localhost\SQLEXPRESS;Database=project_management;User Id=sa;
+ *   Password=YourPassword;Encrypt=false;TrustServerCertificate=true;
+ *
+ *   Or as a URL (note: TrustServerCertificate=true query param required for local):
+ *   mssql://sa:YourPassword@localhost/project_management?TrustServerCertificate=true
+ *
+ * When connecting to localhost/127.0.0.1, TrustServerCertificate is automatically
+ * set to true and Encrypt defaults to false unless explicitly overridden.
  *
  * The pool is lazy-initialised on first use and reused across requests.
  * Call closeSqlPool() during graceful shutdown to drain the pool.
@@ -21,15 +30,28 @@ import sql from "mssql";
 let _pool: sql.ConnectionPool | null = null;
 let _connecting: Promise<sql.ConnectionPool> | null = null;
 
+function isLocalhost(host: string): boolean {
+  const h = host.toLowerCase().split("\\")[0].split(",")[0].trim();
+  return h === "localhost" || h === "127.0.0.1" || h === "." || h === "(local)";
+}
+
 /**
  * Parse the DATABASE_URL into an mssql config object.
  * Supports both connection string format and URL format.
+ *
+ * Local connections (localhost / 127.0.0.1 / . / (local)) automatically get
+ * TrustServerCertificate=true and Encrypt=false unless the connection string
+ * explicitly overrides these values.
  */
 function parseDatabaseUrl(url: string): sql.config {
   // Try URL format: mssql://user:pass@host:port/database
   try {
     const parsed = new URL(url);
     if (parsed.protocol === "mssql:" || parsed.protocol === "sqlserver:") {
+      const local = isLocalhost(parsed.hostname);
+      const trustParam = parsed.searchParams.get("TrustServerCertificate");
+      const encryptParam = parsed.searchParams.get("Encrypt");
+
       const config: sql.config = {
         server:   parsed.hostname,
         port:     parsed.port ? parseInt(parsed.port, 10) : 1433,
@@ -37,11 +59,11 @@ function parseDatabaseUrl(url: string): sql.config {
         user:     decodeURIComponent(parsed.username),
         password: decodeURIComponent(parsed.password),
         options: {
-          encrypt:                 true,
-          trustServerCertificate:  parsed.searchParams.get("TrustServerCertificate") === "true",
-          enableArithAbort:        true,
-          connectTimeout:          30000,
-          requestTimeout:          30000,
+          encrypt:                encryptParam !== null ? encryptParam !== "false" : !local,
+          trustServerCertificate: trustParam !== null ? trustParam === "true" : local,
+          enableArithAbort:       true,
+          connectTimeout:         30000,
+          requestTimeout:         30000,
         },
         pool: {
           max:               10,
@@ -56,7 +78,7 @@ function parseDatabaseUrl(url: string): sql.config {
   }
 
   // ADO.NET connection string format:
-  // Server=...;Database=...;User Id=...;Password=...;Encrypt=true;...
+  // Server=...;Database=...;User Id=...;Password=...;Encrypt=false;TrustServerCertificate=true;
   const parts: Record<string, string> = {};
   url.split(";").forEach((segment) => {
     const idx = segment.indexOf("=");
@@ -67,19 +89,24 @@ function parseDatabaseUrl(url: string): sql.config {
   });
 
   const server = parts["server"] || parts["data source"] || "";
-  // Strip tcp: prefix and instance name for the host
-  const [host, instanceOrPort] = server.replace(/^tcp:/i, "").split(",");
-  const port = instanceOrPort ? parseInt(instanceOrPort, 10) : 1433;
+  // Strip tcp: prefix and port suffix
+  const [hostRaw, portRaw] = server.replace(/^tcp:/i, "").split(",");
+  const port = portRaw ? parseInt(portRaw, 10) : 1433;
+  const host = hostRaw.trim();
+  const local = isLocalhost(host);
+
+  const encryptExplicit = "encrypt" in parts;
+  const trustExplicit   = "trustservercertificate" in parts;
 
   return {
-    server:   host.trim(),
+    server:   host,
     port:     isNaN(port) ? 1433 : port,
     database: parts["database"] || parts["initial catalog"] || "",
     user:     parts["user id"] || parts["uid"] || "",
     password: parts["password"] || parts["pwd"] || "",
     options: {
-      encrypt:                parts["encrypt"] !== "false",
-      trustServerCertificate: parts["trustservercertificate"] === "true",
+      encrypt:                encryptExplicit ? parts["encrypt"] !== "false" : !local,
+      trustServerCertificate: trustExplicit   ? parts["trustservercertificate"] === "true" : local,
       enableArithAbort:       true,
       connectTimeout:         30000,
       requestTimeout:         30000,

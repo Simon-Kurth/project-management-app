@@ -1,35 +1,35 @@
 /**
- * Background scheduler for the Jira data pipeline.
+ * Background scheduler for the Azure Boards data pipeline.
  *
  * Runs on a configurable cron interval (default: every 30 minutes).
- * All heavy lifting is done by JiraConnector.computeAllKPIs() which
+ * All heavy lifting is done by AzureBoardsConnector.computeAllKPIs() which
  * returns pre-aggregated KPI objects — nothing raw is stored or sent anywhere.
  *
- * To disable: set JIRA_SYNC_ENABLED=false in environment.
+ * To disable: set AZURE_SYNC_ENABLED=false in environment.
  */
 
-import { JiraConnector } from "./connectors/jira";
+import { AzureBoardsConnector } from "./connectors/azureBoards";
 import { upsertComputedKPIs, getLatestComputedKPIs } from "./db";
 
 let syncTimer: ReturnType<typeof setInterval> | null = null;
 let isSyncing = false;
 
 /**
- * Run a single Jira sync cycle.
+ * Run a single Azure Boards sync cycle.
  * Safe to call manually (e.g., from an admin tRPC mutation to force refresh).
  */
-export async function runJiraSync(): Promise<{ success: boolean; message: string }> {
+export async function runAzureSync(): Promise<{ success: boolean; message: string }> {
   if (isSyncing) {
     return { success: false, message: "Sync already in progress" };
   }
 
-  const connector = new JiraConnector();
+  const connector = new AzureBoardsConnector();
 
   if (!connector.isConfigured()) {
     return {
       success: false,
       message:
-        "Jira not configured. Set JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN, JIRA_BOARD_ID, JIRA_PROJECT_KEY.",
+        "Azure Boards not configured. Set AZURE_DEVOPS_ORG, AZURE_DEVOPS_PROJECT, AZURE_DEVOPS_PAT.",
     };
   }
 
@@ -37,12 +37,10 @@ export async function runJiraSync(): Promise<{ success: boolean; message: string
   const startedAt = Date.now();
 
   try {
-    console.log("[Jira Sync] Starting KPI computation...");
+    console.log("[Azure Sync] Starting KPI computation...");
 
-    // All aggregation happens inside computeAllKPIs() — pure local computation
     const kpis = await connector.computeAllKPIs();
 
-    // Persist only the final computed KPI object (not raw issues)
     await upsertComputedKPIs({
       boardId: kpis.boardId,
       kpiType: "delivery",
@@ -50,15 +48,14 @@ export async function runJiraSync(): Promise<{ success: boolean; message: string
     });
 
     const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
-    console.log(`[Jira Sync] Complete in ${elapsed}s — velocity: ${kpis.velocity.length} sprints, bugs: ${kpis.bugs.openTotal} open`);
+    console.log(
+      `[Azure Sync] Complete in ${elapsed}s — velocity: ${kpis.velocity.length} sprints, bugs: ${kpis.bugs.openTotal} open`
+    );
 
-    return {
-      success: true,
-      message: `Sync complete in ${elapsed}s`,
-    };
+    return { success: true, message: `Sync complete in ${elapsed}s` };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[Jira Sync] Failed:", msg);
+    console.error("[Azure Sync] Failed:", msg);
     return { success: false, message: msg };
   } finally {
     isSyncing = false;
@@ -70,24 +67,27 @@ export async function runJiraSync(): Promise<{ success: boolean; message: string
  * Called once at server startup from server/_core/index.ts.
  */
 export function startScheduler(): void {
-  if (process.env.JIRA_SYNC_ENABLED === "false") {
-    console.log("[Scheduler] Jira sync disabled (JIRA_SYNC_ENABLED=false)");
+  if (process.env.AZURE_SYNC_ENABLED === "false") {
+    console.log("[Scheduler] Azure Boards sync disabled (AZURE_SYNC_ENABLED=false)");
     return;
   }
 
-  const intervalMinutes = parseInt(process.env.JIRA_SYNC_INTERVAL_MINUTES ?? "30", 10);
+  const intervalMinutes = parseInt(
+    process.env.AZURE_SYNC_INTERVAL_MINUTES ?? "30",
+    10
+  );
   const intervalMs = intervalMinutes * 60 * 1000;
 
-  console.log(`[Scheduler] Jira sync scheduled every ${intervalMinutes} minutes`);
+  console.log(`[Scheduler] Azure Boards sync scheduled every ${intervalMinutes} minutes`);
 
   // Run once at startup (after a short delay to let DB connections settle)
   setTimeout(() => {
-    runJiraSync().catch(console.error);
+    runAzureSync().catch(console.error);
   }, 5000);
 
   // Then on the configured interval
   syncTimer = setInterval(() => {
-    runJiraSync().catch(console.error);
+    runAzureSync().catch(console.error);
   }, intervalMs);
 }
 

@@ -32,8 +32,8 @@ import {
 } from "./db";
 import { withDbError } from "./sqlserver";
 import { getDemoUser } from "./demoUsers";
-import { runJiraSync } from "./scheduler";
-import { JiraConnector } from "./connectors/jira";
+import { runAzureSync } from "./scheduler";
+import { AzureBoardsConnector } from "./connectors/azureBoards";
 import { mockData, connectorStubs } from "./mockData";
 
 // ─── RBAC Helpers ─────────────────────────────────────────────────────────────
@@ -277,13 +277,13 @@ export const appRouter = router({
       requireExecutive(ctx.user.role);
       await writeAuditLog({ userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, action: "TAB_VIEW", resource: "dashboard", resourceId: "delivery" });
 
-      // Use live Jira KPIs if available, fall back to mock data gracefully
-      const boardId = process.env.JIRA_BOARD_ID;
+      // Use live Azure Boards KPIs if available, fall back to mock data gracefully
+      const boardId = process.env.AZURE_DEVOPS_ORG && process.env.AZURE_DEVOPS_PROJECT
+        ? `${process.env.AZURE_DEVOPS_ORG}/${process.env.AZURE_DEVOPS_PROJECT}`
+        : null;
       const liveKpis = boardId ? await getLatestComputedKPIs(boardId, "delivery") : null;
 
       if (liveKpis) {
-        // Merge live velocity + burndown into the mock structure
-        // Only the fields we have live data for are replaced
         return {
           ...mockData.delivery,
           velocityTrend: liveKpis.velocity.map((v) => ({
@@ -293,7 +293,7 @@ export const appRouter = router({
           })),
           burndown: liveKpis.burndown,
           activeSprintName: liveKpis.activeSprint?.name ?? null,
-          dataSource: "jira" as const,
+          dataSource: "azure-boards" as const,
           lastSyncedAt: liveKpis.computedAt,
         };
       }
@@ -305,8 +305,10 @@ export const appRouter = router({
       requireExecutive(ctx.user.role);
       await writeAuditLog({ userId: ctx.user.id, userEmail: ctx.user.email ?? undefined, action: "TAB_VIEW", resource: "dashboard", resourceId: "development" });
 
-      // Use live Jira KPIs if available, fall back to mock data gracefully
-      const boardId = process.env.JIRA_BOARD_ID;
+      // Use live Azure Boards KPIs if available, fall back to mock data gracefully
+      const boardId = process.env.AZURE_DEVOPS_ORG && process.env.AZURE_DEVOPS_PROJECT
+        ? `${process.env.AZURE_DEVOPS_ORG}/${process.env.AZURE_DEVOPS_PROJECT}`
+        : null;
       const liveKpis = boardId ? await getLatestComputedKPIs(boardId, "delivery") : null;
 
       if (liveKpis) {
@@ -318,7 +320,7 @@ export const appRouter = router({
           deploymentFrequencyData: liveKpis.deploymentFrequency,
           throughput: liveKpis.throughput,
           bugs: liveKpis.bugs,
-          dataSource: "jira" as const,
+          dataSource: "azure-boards" as const,
           lastSyncedAt: liveKpis.computedAt,
         };
       }
@@ -326,29 +328,31 @@ export const appRouter = router({
       return { ...mockData.development, dataSource: "mock" as const };
     }),
 
-    // Admin-only: force an immediate Jira sync without waiting for the scheduler
-    forceJiraSync: protectedProcedure.mutation(async ({ ctx }) => {
+    // Admin-only: force an immediate Azure Boards sync without waiting for the scheduler
+    forceAzureSync: protectedProcedure.mutation(async ({ ctx }) => {
       if (ctx.user.role !== "admin" && ctx.user.role !== "company") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
       }
-      const connector = new JiraConnector();
+      const connector = new AzureBoardsConnector();
       if (!connector.isConfigured()) {
-        return { success: false, message: "Jira not configured. Set JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN, JIRA_BOARD_ID, JIRA_PROJECT_KEY in Secrets." };
+        return { success: false, message: "Azure Boards not configured. Set AZURE_DEVOPS_ORG, AZURE_DEVOPS_PROJECT, AZURE_DEVOPS_PAT." };
       }
-      return runJiraSync();
+      return runAzureSync();
     }),
 
-    // Return Jira connector status (configured / last sync time)
-    jiraStatus: protectedProcedure.query(async ({ ctx }) => {
+    // Return Azure Boards connector status (configured / last sync time)
+    azureBoardsStatus: protectedProcedure.query(async ({ ctx }) => {
       requireExecutive(ctx.user.role);
-      const connector = new JiraConnector();
-      const boardId = process.env.JIRA_BOARD_ID ?? "";
+      const connector = new AzureBoardsConnector();
+      const boardId = process.env.AZURE_DEVOPS_ORG && process.env.AZURE_DEVOPS_PROJECT
+        ? `${process.env.AZURE_DEVOPS_ORG}/${process.env.AZURE_DEVOPS_PROJECT}`
+        : "";
       const latest = boardId ? await getLatestComputedKPIs(boardId, "delivery") : null;
       return {
         configured: connector.isConfigured(),
         boardId,
         lastSyncedAt: latest?.computedAt ?? null,
-        dataSource: latest ? "jira" : "mock",
+        dataSource: latest ? "azure-boards" : "mock",
       };
     }),
 
