@@ -4,26 +4,11 @@ import { trpc } from "@/lib/trpc";
 import { getDemoUser, clearDemoUser } from "@/lib/authStore";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
   ChevronDown,
-  Cpu,
-  DollarSign,
-  Headphones,
-  LayoutDashboard,
-  LogOut,
-  Megaphone,
-  PackageCheck,
-  Settings,
-  ShieldCheck,
-  TrendingUp,
-  Users,
-  Anchor,
-  Server,
-  Building2,
   Layers,
-  Headset,
-  Briefcase,
-  Users2,
+  LogOut,
+  Settings,
+  Users,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -36,10 +21,7 @@ type AppRole =
   | "user"
   | "admin"
   | "executive"
-  | "company"
-  | "qa"
-  | "sales_marketing"
-  | "csm";
+  | "company";
 
 interface SubTab {
   id: string;
@@ -59,136 +41,20 @@ interface NavSection {
   roles: AppRole[];
 }
 
-// ─── Navigation tree ─────────────────────────────────────────────────────────
-// Structure:
-//   Executive Summary  → /dashboard/executive-summary
-//     ├ Financials     → /dashboard/financials
-//     └ HR             → /dashboard/hr  (AI Adoption ranking)
-//   Delivery           → /dashboard/delivery
-//     ├ QA             → /dashboard/qa
-//     └ Project Mgmt   → /dashboard/project-management  (stub)
-//   Development        → /dashboard/development
-//     ├ UCP            → /dashboard/ucp
-//     ├ SSOC           → /dashboard/ssoc
-//     └ Enterprise     → /dashboard/enterprise
-//   IT/Ops             → /dashboard/it-ops
-//     └ Prod Support   → /dashboard/prod-support
-//   Sales              → /dashboard/sales
-//     └ Marketing      → /dashboard/marketing
-//   Settings           → /dashboard/settings  (users + prefs)
-
 const ALL_SECTIONS: NavSection[] = [
   {
-    id: "executive-summary",
-    label: "Executive Summary",
-    icon: <LayoutDashboard size={14} />,
-    path: "/dashboard/executive-summary",
+    id: "project-management",
+    label: "Project Management",
+    icon: <Layers size={14} />,
+    path: "/dashboard/project-management",
     roles: ["executive", "company", "admin"],
-    subTabs: [
-      {
-        id: "financials",
-        label: "Financials",
-        path: "/dashboard/financials",
-        roles: ["executive", "company", "admin"],
-      },
-      {
-        id: "hr",
-        label: "HR",
-        path: "/dashboard/hr",
-        roles: ["executive", "company", "admin"],
-      },
-    ],
-  },
-  {
-    id: "delivery",
-    label: "Delivery",
-    icon: <PackageCheck size={14} />,
-    path: "/dashboard/delivery",
-    roles: ["executive", "company", "admin", "qa"],
-    subTabs: [
-      {
-        id: "qa",
-        label: "QA",
-        path: "/dashboard/qa",
-        roles: ["executive", "company", "admin", "qa"],
-      },
-      {
-        id: "project-management",
-        label: "Project Management",
-        path: "/dashboard/project-management",
-        roles: ["executive", "company", "admin"],
-      },
-    ],
-  },
-  {
-    id: "development",
-    label: "Development",
-    icon: <Cpu size={14} />,
-    path: "/dashboard/development",
-    roles: ["executive", "company", "admin"],
-    subTabs: [
-      {
-        id: "ucp",
-        label: "UCP",
-        path: "/dashboard/ucp",
-        roles: ["executive", "company", "admin"],
-      },
-      {
-        id: "ssoc",
-        label: "SSOC",
-        path: "/dashboard/ssoc",
-        roles: ["executive", "company", "admin"],
-      },
-      {
-        id: "enterprise",
-        label: "Enterprise",
-        path: "/dashboard/enterprise",
-        roles: ["executive", "company", "admin"],
-      },
-    ],
-  },
-  {
-    id: "it-ops",
-    label: "IT / Ops",
-    icon: <Server size={14} />,
-    path: "/dashboard/it-ops",
-    roles: ["executive", "company", "admin"],
-    subTabs: [
-      {
-        id: "prod-support",
-        label: "Prod Support",
-        path: "/dashboard/prod-support",
-        roles: ["executive", "company", "admin"],
-      },
-    ],
-  },
-  {
-    id: "sales",
-    label: "Sales",
-    icon: <TrendingUp size={14} />,
-    path: "/dashboard/sales",
-    roles: ["executive", "company", "admin", "sales_marketing", "csm"],
-    subTabs: [
-      {
-        id: "marketing",
-        label: "Marketing",
-        path: "/dashboard/marketing",
-        roles: ["executive", "company", "admin", "sales_marketing"],
-      },
-      {
-        id: "csm",
-        label: "CSM",
-        path: "/dashboard/csm",
-        roles: ["executive", "company", "admin", "csm"],
-      },
-    ],
   },
   {
     id: "settings",
     label: "Settings",
     icon: <Settings size={14} />,
     path: "/dashboard/settings",
-    roles: ["executive", "company", "admin", "qa", "sales_marketing", "csm", "user"],
+    roles: ["executive", "company", "admin", "user"],
     subTabs: [
       {
         id: "users",
@@ -200,7 +66,7 @@ const ALL_SECTIONS: NavSection[] = [
         id: "notification-preferences",
         label: "Notifications",
         path: "/dashboard/notification-preferences",
-        roles: ["executive", "company", "admin", "qa", "sales_marketing", "csm", "user"],
+        roles: ["executive", "company", "admin", "user"],
       },
     ],
   },
@@ -209,13 +75,10 @@ const ALL_SECTIONS: NavSection[] = [
 // ─── Role display config ──────────────────────────────────────────────────────
 
 const ROLE_CONFIG: Record<AppRole, { label: string; color: string }> = {
-  executive:       { label: "Executive",        color: "bg-[#134C93]/10 text-[#134C93] border-[#134C93]/25" },
-  company:         { label: "Company",           color: "bg-[#018365]/10 text-[#018365] border-[#018365]/25" },
-  admin:           { label: "Admin",             color: "bg-amber-100 text-amber-700 border-amber-200" },
-  qa:              { label: "QA",                color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  sales_marketing: { label: "Sales & Marketing", color: "bg-orange-50 text-orange-700 border-orange-200" },
-  csm:             { label: "CSM",               color: "bg-cyan-50 text-cyan-700 border-cyan-200" },
-  user:            { label: "User",              color: "bg-gray-100 text-gray-600 border-gray-200" },
+  executive: { label: "Executive", color: "bg-[#134C93]/10 text-[#134C93] border-[#134C93]/25" },
+  company:   { label: "Company",   color: "bg-[#018365]/10 text-[#018365] border-[#018365]/25" },
+  admin:     { label: "Admin",     color: "bg-amber-100 text-amber-700 border-amber-200" },
+  user:      { label: "User",      color: "bg-gray-100 text-gray-600 border-gray-200" },
 };
 
 // ─── Duo Status Badge ─────────────────────────────────────────────────────────
