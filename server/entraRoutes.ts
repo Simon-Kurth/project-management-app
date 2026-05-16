@@ -122,7 +122,7 @@ export function registerEntraRoutes(app: Express) {
       // ── Exchange code for tokens and extract user identity ──────────────
       const entraUser = await handleEntraCallback(code, state);
 
-      // ── Map Entra groups to Wheelhouse RBAC role ────────────────────────
+      // ── Map Entra groups to Project Management App RBAC role ────────────────────────
       const role = mapEntraGroupsToRole(entraUser.groups);
 
       // ── Provision / update user in DB ───────────────────────────────────

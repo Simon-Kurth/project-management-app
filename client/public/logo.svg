@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 32" fill="none">
+  <rect x="0" y="8" width="16" height="16" rx="4" fill="#018365"/>
+  <rect x="20" y="4" width="16" height="24" rx="4" fill="#134C93"/>
+  <rect x="40" y="10" width="16" height="12" rx="4" fill="#018365" opacity="0.7"/>
+  <text x="64" y="22" font-family="system-ui, sans-serif" font-weight="700" font-size="14" fill="#141A2B">Project Management</text>
+</svg>

@@ -1,11 +1,11 @@
 -- ============================================================
--- Wheelhouse Executive Dashboard
+-- Project Management App
 -- Migration: migrate-20260402-add-notification-preferences-table
 -- ============================================================
 --
 -- METADATA
 -- Migration   : migrate-20260402-add-notification-preferences-table
--- Author      : DataOceans Engineering
+-- Author      : Engineering
 -- Date        : 2026-04-02
 -- Ticket      : WH-158 — Per-user notification preferences
 -- Description :
@@ -17,7 +17,7 @@
 -- Safe to re-run: all DDL is guarded by existence checks.
 -- ============================================================
 
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- ============================================================
@@ -102,10 +102,10 @@ END
 GO
 
 -- Grant permissions to application login
-IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'wheelhouse_app')
+IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'pm_app')
 BEGIN
-  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.notification_preferences TO wheelhouse_app;
-  PRINT 'Granted permissions to wheelhouse_app';
+  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.notification_preferences TO pm_app;
+  PRINT 'Granted permissions to pm_app';
 END
 GO
 

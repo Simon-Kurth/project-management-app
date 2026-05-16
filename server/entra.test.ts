@@ -20,7 +20,7 @@ describe("isEntraConfigured", () => {
     ENTRA_TENANT_ID:     "test-tenant-id",
     ENTRA_CLIENT_ID:     "test-client-id",
     ENTRA_CLIENT_SECRET: "test-client-secret",
-    ENTRA_REDIRECT_URI:  "https://wheelhouse.example.com/api/auth/entra/callback",
+    ENTRA_REDIRECT_URI:  "https://your-app.example.com/api/auth/entra/callback",
   };
 
   beforeEach(() => {

@@ -1,6 +1,6 @@
 # Environment Variable Reference
 
-**The Wheelhouse** — Internal Executive Dashboard
+Project Management App — Internal Executive Dashboard
 
 This document lists every environment variable the application reads. Copy the relevant sections into your secrets manager or deployment configuration.
 
@@ -21,17 +21,17 @@ The application accepts both ADO.NET connection string format and URL format.
 
 **ADO.NET connection string (recommended for Azure SQL):**
 ```
-Server=your-server.database.windows.net;Database=wheelhouse;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=false;
+Server=your-server.database.windows.net;Database=ProjectManagement;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=false;
 ```
 
 **URL format:**
 ```
-mssql://username:password@your-server.database.windows.net/wheelhouse
+mssql://username:password@your-server.database.windows.net/ProjectManagement
 ```
 
 **Named instance with port:**
 ```
-Server=your-server.company.com,1433;Database=wheelhouse;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=true;
+Server=your-server.company.com,1433;Database=ProjectManagement;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=true;
 ```
 
 Set `TrustServerCertificate=true` only for on-premises SQL Server with self-signed certificates. Always use `Encrypt=true` in production.
@@ -49,7 +49,7 @@ See `docs/ENTRA_ACTIVATION_GUIDE.md` for step-by-step setup instructions.
 | `ENTRA_TENANT_ID` | Yes | Azure AD tenant GUID (e.g. `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`) |
 | `ENTRA_CLIENT_ID` | Yes | App registration Application (client) ID |
 | `ENTRA_CLIENT_SECRET` | Yes | App registration client secret value |
-| `ENTRA_REDIRECT_URI` | Yes | Must exactly match the redirect URI registered in Entra (e.g. `https://wheelhouse.company.com/api/auth/entra/callback`) |
+| `ENTRA_REDIRECT_URI` | Yes | Must exactly match the redirect URI registered in Entra (e.g. `https://your-app.company.com/api/auth/entra/callback`) |
 
 ### Entra Group → RBAC Role Mapping (optional)
 
@@ -79,23 +79,22 @@ See `docs/DUO_ACTIVATION_GUIDE.md` for step-by-step setup instructions.
 | `DUO_CLIENT_ID` | Yes | Client ID from Duo Web SDK application |
 | `DUO_CLIENT_SECRET` | Yes | Client Secret from Duo Web SDK application |
 | `DUO_API_HOST` | Yes | Duo API hostname (e.g. `api-xxxxxxxx.duosecurity.com`) |
-| `DUO_REDIRECT_URL` | Yes | Callback URL after Duo authentication (e.g. `https://wheelhouse.company.com/duo-callback`) |
+| `DUO_REDIRECT_URL` | Yes | Callback URL after Duo authentication (e.g. `https://your-app.company.com/duo-callback`) |
 
 ---
 
-## Jira Connector (optional)
+## Azure DevOps Boards Connector (optional)
 
-When configured, the application fetches live Delivery and Development KPIs from Jira. When absent, mock data is used.
+When configured, the application fetches live sprint and delivery KPIs from Azure Boards on a schedule and serves them from the local database. When absent, mock data is used.
 
-| Variable | Description |
-|---|---|
-| `JIRA_BASE_URL` | Jira Cloud base URL (e.g. `https://your-org.atlassian.net`) |
-| `JIRA_EMAIL` | Service account email for Jira API authentication |
-| `JIRA_API_TOKEN` | Jira API token (generate at id.atlassian.com) |
-| `JIRA_PROJECT_KEY` | Jira project key (e.g. `ENG`) |
-| `JIRA_BOARD_ID` | Jira board ID (numeric) |
-| `JIRA_SYNC_ENABLED` | Set to `true` to enable background sync (default: `false`) |
-| `JIRA_SYNC_INTERVAL_MINUTES` | How often to sync Jira data (default: `60`) |
+| Variable | Required | Description |
+|---|---|---|
+| `AZURE_DEVOPS_ORG` | Yes | Azure DevOps organisation name (e.g. `mycompany`) |
+| `AZURE_DEVOPS_PROJECT` | Yes | Project name (e.g. `MyProject`) |
+| `AZURE_DEVOPS_PAT` | Yes | Personal Access Token with Work Items Read scope |
+| `AZURE_DEVOPS_TEAM` | No | Team name — defaults to `{project} Team` |
+| `AZURE_SYNC_ENABLED` | No | Set to `true` to enable background sync (default: `false`) |
+| `AZURE_SYNC_INTERVAL_MINUTES` | No | How often to sync in minutes (default: `60`) |
 
 ---
 
@@ -106,7 +105,7 @@ For a production deployment with full Entra SSO + Duo MFA:
 ```
 # Core
 # SQL Server ADO.NET connection string:
-DATABASE_URL=Server=your-server.database.windows.net;Database=wheelhouse;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=false;
+DATABASE_URL=Server=your-server.database.windows.net;Database=ProjectManagement;User Id=sa;Password=your-password;Encrypt=true;TrustServerCertificate=false;
 JWT_SECRET=<64-char hex>
 NODE_ENV=production
 
@@ -114,22 +113,26 @@ NODE_ENV=production
 ENTRA_TENANT_ID=<tenant-guid>
 ENTRA_CLIENT_ID=<client-guid>
 ENTRA_CLIENT_SECRET=<secret>
-ENTRA_REDIRECT_URI=https://wheelhouse.company.com/api/auth/entra/callback
+ENTRA_REDIRECT_URI=https://your-app.company.com/api/auth/entra/callback
 
 # Entra Groups (recommended)
 ENTRA_GROUP_ADMIN=<group-guid>
 ENTRA_GROUP_EXECUTIVE=<group-guid>
-ENTRA_GROUP_QA=<group-guid>
-ENTRA_GROUP_SALES_MARKETING=<group-guid>
-ENTRA_GROUP_CSM=<group-guid>
+
+# Azure Boards
+AZURE_DEVOPS_ORG=mycompany
+AZURE_DEVOPS_PROJECT=MyProject
+AZURE_DEVOPS_PAT=<pat>
+AZURE_SYNC_ENABLED=true
+AZURE_SYNC_INTERVAL_MINUTES=60
 
 # Duo MFA
 DUO_CLIENT_ID=<duo-client-id>
 DUO_CLIENT_SECRET=<duo-secret>
 DUO_API_HOST=api-xxxxxxxx.duosecurity.com
-DUO_REDIRECT_URL=https://wheelhouse.company.com/duo-callback
+DUO_REDIRECT_URL=https://your-app.company.com/duo-callback
 ```
 
 ---
 
-*Last updated: March 2026 · The Wheelhouse · DataOceans Internal*
+*Last updated: March 2026 · Project Management App*

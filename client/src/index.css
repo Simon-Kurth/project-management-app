@@ -22,7 +22,7 @@
   --color-popover:          oklch(1 0 0);
   --color-popover-foreground: oklch(0.14 0.04 260);
 
-  /* Primary = DataOceans blue #134C93 */
+  /* Primary = brand blue #134C93 */
   --color-primary:          oklch(0.38 0.14 255);
   --color-primary-foreground: oklch(1 0 0);
 
@@ -34,7 +34,7 @@
   --color-muted:            oklch(0.94 0.008 240);
   --color-muted-foreground: oklch(0.50 0.02 250);    /* #6E7791 */
 
-  /* Accent = DataOceans teal #018365 */
+  /* Accent = brand teal #018365 */
   --color-accent:           oklch(0.55 0.13 165);
   --color-accent-foreground: oklch(1 0 0);
 

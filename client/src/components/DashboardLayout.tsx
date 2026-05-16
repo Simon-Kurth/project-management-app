@@ -213,15 +213,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2.5 shrink-0 group">
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
-              alt="DataOceans"
+              src="/logo.svg"
+              alt="Project Management App"
               className="h-6 w-auto object-contain"
             />
             <div className="h-4 w-px bg-[#E2E8F0] hidden sm:block" />
             <div className="hidden sm:flex items-center gap-1.5">
               <Anchor size={13} className="text-[#018365]" />
               <span className="text-sm font-bold text-[#141A2B] tracking-tight">
-                The Wheelhouse
+                Project Management App
               </span>
             </div>
           </Link>
@@ -392,14 +392,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <footer className="border-t border-[#E2E8F0] bg-white px-6 py-2.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
-            alt="DataOceans"
+            src="/logo.svg"
+            alt="Project Management App"
             className="h-4 w-auto object-contain opacity-60"
           />
-          <span className="text-[10px] text-[#6E7791]">The Wheelhouse</span>
+          <span className="text-[10px] text-[#6E7791]">Project Management App</span>
         </div>
         <span className="text-[10px] text-[#6E7791]">
-          © {new Date().getFullYear()} DataOceans · Internal Use Only
+          © {new Date().getFullYear()} Project Management App · Internal Use Only
         </span>
       </footer>
     </div>

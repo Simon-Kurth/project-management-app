@@ -1,11 +1,11 @@
 -- ============================================================
--- Wheelhouse Executive Dashboard
+-- Project Management App
 -- Backfill: backfill-20260401-seed-demo-notifications
 -- ============================================================
 --
 -- METADATA
 -- Backfill    : backfill-20260401-seed-demo-notifications
--- Author      : DataOceans Engineering
+-- Author      : Engineering
 -- Date        : 2026-04-01
 -- Ticket      : WH-142 — In-app notification centre
 -- Description :
@@ -24,7 +24,7 @@
 --   to avoid duplicate rows.
 -- ============================================================
 
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- ============================================================
@@ -57,10 +57,10 @@ INSERT INTO #DemoUsers (role, userId)
 SELECT u.role, u.id
 FROM dbo.users u
 WHERE u.email IN (
-  N'executive@demo.wheelhouse.io',
-  N'qa@demo.wheelhouse.io',
-  N'sales@demo.wheelhouse.io',
-  N'csm@demo.wheelhouse.io'
+  N'executive@demo.pm-app.com',
+  N'qa@demo.pm-app.com',
+  N'sales@demo.pm-app.com',
+  N'csm@demo.pm-app.com'
 )
 AND u.loginMethod = N'password';
 
@@ -411,10 +411,10 @@ SELECT
 FROM dbo.users u
 LEFT JOIN dbo.notifications n ON n.userId = u.id
 WHERE u.email IN (
-  N'executive@demo.wheelhouse.io',
-  N'qa@demo.wheelhouse.io',
-  N'sales@demo.wheelhouse.io',
-  N'csm@demo.wheelhouse.io'
+  N'executive@demo.pm-app.com',
+  N'qa@demo.pm-app.com',
+  N'sales@demo.pm-app.com',
+  N'csm@demo.pm-app.com'
 )
 GROUP BY u.email, u.role
 ORDER BY u.role;

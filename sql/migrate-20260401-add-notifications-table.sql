@@ -1,11 +1,11 @@
 -- ============================================================
--- Wheelhouse Executive Dashboard
+-- Project Management App
 -- Migration: migrate-20260401-add-notifications-table
 -- ============================================================
 --
 -- METADATA
 -- Migration : migrate-20260401-add-notifications-table
--- Author    : DataOceans Engineering
+-- Author    : Engineering
 -- Date      : 2026-04-01
 -- Ticket    : WH-142 — In-app notification centre
 -- Description:
@@ -16,12 +16,12 @@
 --   sync failure) or manually sent by an admin.
 --
 --   Also grants SELECT/INSERT/UPDATE/DELETE on the new table
---   to the wheelhouse_app least-privilege login, and adds a
+--   to the pm_app least-privilege login, and adds a
 --   purge stored procedure for notifications older than the
 --   configured retention window.
 -- ============================================================
 
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- ============================================================
@@ -151,15 +151,15 @@ GO
 
 -- ── 2c. Grant permissions to the application login ────────────────────────────
 IF EXISTS (
-  SELECT 1 FROM sys.database_principals WHERE name = N'wheelhouse_app'
+  SELECT 1 FROM sys.database_principals WHERE name = N'pm_app'
 )
 BEGIN
-  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.notifications TO wheelhouse_app;
-  PRINT 'Permissions on dbo.notifications granted to wheelhouse_app.';
+  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.notifications TO pm_app;
+  PRINT 'Permissions on dbo.notifications granted to pm_app.';
 END
 ELSE
 BEGIN
-  PRINT 'Login wheelhouse_app not found — skipping permission grant. Run create-app-login.sql first.';
+  PRINT 'Login pm_app not found — skipping permission grant. Run create-app-login.sql first.';
 END
 GO
 
@@ -194,10 +194,10 @@ END
 GO
 
 -- Grant EXECUTE on the new purge procedure to the app login
-IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'wheelhouse_app')
+IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'pm_app')
 BEGIN
-  GRANT EXECUTE ON dbo.usp_PurgeOldNotifications TO wheelhouse_app;
-  PRINT 'EXECUTE on dbo.usp_PurgeOldNotifications granted to wheelhouse_app.';
+  GRANT EXECUTE ON dbo.usp_PurgeOldNotifications TO pm_app;
+  PRINT 'EXECUTE on dbo.usp_PurgeOldNotifications granted to pm_app.';
 END
 GO
 
@@ -209,26 +209,26 @@ GO
 DECLARE @jobExists BIT = 0;
 SELECT @jobExists = 1
 FROM msdb.dbo.sysjobs
-WHERE name = N'Wheelhouse — Purge Old Notifications';
+WHERE name = N'ProjectManagement — Purge Old Notifications';
 
 IF @jobExists = 0
 BEGIN
   EXEC msdb.dbo.sp_add_job
-    @job_name                    = N'Wheelhouse — Purge Old Notifications',
+    @job_name                    = N'ProjectManagement — Purge Old Notifications',
     @enabled                     = 1,
     @description                 = N'Purges notifications older than 90 days. Runs weekly on Sunday at 03:00 UTC.',
     @category_name               = N'[Uncategorized (Local)]',
     @notify_level_eventlog       = 2,
     @notify_level_email          = 2,
-    @notify_email_operator_name  = N'Wheelhouse DBA';
+    @notify_email_operator_name  = N'ProjectManagement DBA';
 
   EXEC msdb.dbo.sp_add_jobstep
-    @job_name          = N'Wheelhouse — Purge Old Notifications',
+    @job_name          = N'ProjectManagement — Purge Old Notifications',
     @step_name         = N'Execute usp_PurgeOldNotifications',
     @step_id           = 1,
     @subsystem         = N'TSQL',
     @command           = N'EXEC dbo.usp_PurgeOldNotifications @retentionDays = 90;',
-    @database_name     = N'Wheelhouse',
+    @database_name     = N'ProjectManagement',
     @on_success_action = 1,
     @on_fail_action    = 2;
 
@@ -241,18 +241,18 @@ BEGIN
     @active_start_time    = 030000;
 
   EXEC msdb.dbo.sp_attach_schedule
-    @job_name      = N'Wheelhouse — Purge Old Notifications',
+    @job_name      = N'ProjectManagement — Purge Old Notifications',
     @schedule_name = N'Weekly Sunday at 0300';
 
   EXEC msdb.dbo.sp_add_jobserver
-    @job_name    = N'Wheelhouse — Purge Old Notifications',
+    @job_name    = N'ProjectManagement — Purge Old Notifications',
     @server_name = N'(LOCAL)';
 
-  PRINT 'Job ''Wheelhouse — Purge Old Notifications'' created.';
+  PRINT 'Job ''ProjectManagement — Purge Old Notifications'' created.';
 END
 ELSE
 BEGIN
-  PRINT 'Job ''Wheelhouse — Purge Old Notifications'' already exists — skipping.';
+  PRINT 'Job ''ProjectManagement — Purge Old Notifications'' already exists — skipping.';
 END
 GO
 
@@ -266,13 +266,13 @@ GO
 -- ============================================================
 
 /*
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- Remove Agent job
 DECLARE @jobId UNIQUEIDENTIFIER;
 SELECT @jobId = job_id FROM msdb.dbo.sysjobs
-WHERE name = N'Wheelhouse — Purge Old Notifications';
+WHERE name = N'ProjectManagement — Purge Old Notifications';
 IF @jobId IS NOT NULL
   EXEC msdb.dbo.sp_delete_job @job_id = @jobId;
 GO
@@ -323,14 +323,14 @@ WHERE i.object_id = OBJECT_ID('dbo.notifications')
 ORDER BY i.index_id;
 GO
 
--- Confirm permissions for wheelhouse_app
+-- Confirm permissions for pm_app
 SELECT
   OBJECT_NAME(dp.major_id)  AS [Object],
   dp.permission_name        AS [Permission],
   dp.state_desc             AS [State]
 FROM sys.database_permissions dp
 JOIN sys.database_principals  pr ON pr.principal_id = dp.grantee_principal_id
-WHERE pr.name = N'wheelhouse_app'
+WHERE pr.name = N'pm_app'
   AND OBJECT_NAME(dp.major_id) IN (N'notifications', N'usp_PurgeOldNotifications')
 ORDER BY OBJECT_NAME(dp.major_id), dp.permission_name;
 GO

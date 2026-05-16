@@ -19,7 +19,7 @@
  *   ENTRA_CLIENT_ID      — App registration Application (client) ID
  *   ENTRA_CLIENT_SECRET  — App registration client secret
  *   ENTRA_REDIRECT_URI   — Must match the redirect URI registered in Entra
- *                          e.g. https://wheelhouse.company.com/api/auth/entra/callback
+ *                          e.g. https://your-app.company.com/api/auth/entra/callback
  *
  * Optional group-to-role mapping:
  *   ENTRA_GROUP_ADMIN           — Entra group GUID → admin role
@@ -193,7 +193,7 @@ export async function handleEntraCallback(
 }
 
 /**
- * Map Entra group memberships to a Wheelhouse RBAC role.
+ * Map Entra group memberships to a Project Management App RBAC role.
  * Falls back to "user" (no dashboard access) if no group matches.
  *
  * Priority order: admin > executive > company > qa > sales_marketing > csm

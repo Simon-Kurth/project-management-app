@@ -131,8 +131,8 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex items-center gap-3">
           <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
-            alt="DataOceans"
+            src="/logo.svg"
+            alt="Project Management App"
             className="h-8 w-auto object-contain brightness-0 invert opacity-90"
           />
         </div>
@@ -141,7 +141,7 @@ export default function LoginPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Anchor className="text-[#018365]" size={22} />
-            <span className="text-[#018365] font-bold text-lg tracking-tight">The Wheelhouse</span>
+            <span className="text-[#018365] font-bold text-lg tracking-tight">Project Management App</span>
           </div>
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
             Enterprise Intelligence,<br />
@@ -171,7 +171,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-[#4a5a78] text-xs">
-          © {new Date().getFullYear()} DataOceans · Internal Use Only
+          © {new Date().getFullYear()} Project Management App · Internal Use Only
         </p>
       </div>
 
@@ -182,14 +182,14 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
             <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663386324339/fQtBjMcGkJgQ5FrhBiqAWp/dataoceans_logo_11b1e43a.png"
-              alt="DataOceans"
+              src="/logo.svg"
+              alt="Project Management App"
               className="h-7 w-auto object-contain"
             />
             <div className="h-4 w-px bg-[#E2E8F0]" />
             <div className="flex items-center gap-1.5">
               <Anchor size={14} className="text-[#018365]" />
-              <span className="font-bold text-[#141A2B] text-sm">The Wheelhouse</span>
+              <span className="font-bold text-[#141A2B] text-sm">Project Management App</span>
             </div>
           </div>
 
@@ -268,7 +268,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@dataoceans.com"
+                    placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 border-[#E2E8F0] bg-[#F8FAFC] text-[#141A2B] placeholder:text-[#6E7791] focus:border-[#134C93] focus:ring-[#134C93]/20"

@@ -1,13 +1,13 @@
 # Microsoft Entra ID (Azure AD) SSO Activation Guide
 
-**The Wheelhouse** — Internal Executive Dashboard  
+Project Management App — Internal Executive Dashboard  
 **Audience:** IT Administrator / DevOps Engineer
 
 ---
 
 ## Overview
 
-The Wheelhouse supports Microsoft Entra ID (Azure AD) as its primary authentication provider. When the four required environment variables are set, the application automatically presents a **"Sign in with Microsoft"** button on the login page and enforces the full SSO flow. When the variables are absent, the application falls back to password-based login for demo/development use.
+Project Management App supports Microsoft Entra ID (Azure AD) as its primary authentication provider. When the four required environment variables are set, the application automatically presents a **"Sign in with Microsoft"** button on the login page and enforces the full SSO flow. When the variables are absent, the application falls back to password-based login for demo/development use.
 
 The authentication chain is:
 
@@ -33,7 +33,7 @@ Dashboard (signed session cookie)
 
 | Field | Value |
 |---|---|
-| Name | `The Wheelhouse` (or your preferred name) |
+| Name | `Project Management App` (or your preferred name) |
 | Supported account types | **Accounts in this organizational directory only** (single-tenant) |
 | Redirect URI | `https://YOUR_DOMAIN/api/auth/entra/callback` |
 
@@ -46,7 +46,7 @@ Dashboard (signed session cookie)
 ## Step 2 — Create a Client Secret
 
 1. In the app registration, go to **Certificates & secrets → Client secrets → New client secret**.
-2. Set a description (e.g., `wheelhouse-prod`) and an expiry (24 months recommended).
+2. Set a description (e.g., `pm-prod`) and an expiry (24 months recommended).
 3. Click **Add** and immediately copy the **Value** — this is `ENTRA_CLIENT_SECRET`.
 
 > **Important:** The secret value is only shown once. Store it securely in your secrets manager immediately.
@@ -102,12 +102,12 @@ Create one security group per dashboard role:
 
 | Group Name | Dashboard Role | Access |
 |---|---|---|
-| `Wheelhouse-Executive` | `executive` | All 9 tabs |
-| `Wheelhouse-Company` | `company` | All 9 tabs |
-| `Wheelhouse-QA` | `qa` | QA tab only |
-| `Wheelhouse-SalesMarketing` | `sales_marketing` | Sales + Marketing tabs |
-| `Wheelhouse-CSM` | `csm` | CSM tab only |
-| `Wheelhouse-Admin` | `admin` | All tabs + User Management |
+| `PM-Executive` | `executive` | All 9 tabs |
+| `PM-Company` | `company` | All 9 tabs |
+| `PM-QA` | `qa` | QA tab only |
+| `PM-SalesMarketing` | `sales_marketing` | Sales + Marketing tabs |
+| `PM-CSM` | `csm` | CSM tab only |
+| `PM-Admin` | `admin` | All tabs + User Management |
 
 ### 5c — Set Group ID Environment Variables
 
@@ -174,4 +174,4 @@ Refer to `docs/DUO_ACTIVATION_GUIDE.md` for Duo setup instructions.
 
 ---
 
-*Last updated: March 2026 · The Wheelhouse · DataOceans Internal*
+*Last updated: March 2026 · Project Management App*

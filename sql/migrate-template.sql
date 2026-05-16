@@ -1,5 +1,5 @@
 -- ============================================================
--- Wheelhouse Executive Dashboard
+-- Project Management App
 -- Migration Script Template
 -- ============================================================
 --
@@ -19,8 +19,8 @@
 --   5. Test the forward migration on a dev/staging database first.
 --
 --   6. Run against production:
---        sqlcmd -S <server> -U wheelhouse_app -P <password>
---               -d Wheelhouse -i sql/migrate-YYYYMMDD-description.sql
+--        sqlcmd -S <server> -U pm_app -P <password>
+--               -d ProjectManagement -i sql/migrate-YYYYMMDD-description.sql
 --
 -- COMPATIBILITY
 --   SQL Server 2019+, Azure SQL Database, Azure SQL Managed Instance
@@ -35,7 +35,7 @@
 --   <One or two sentences describing what this migration does and why.>
 -- ─────────────────────────────────────────────────────────────────────────────
 
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- ============================================================
@@ -95,10 +95,10 @@ GO
 
 -- ── Example C: Grant permissions on new table to app login ────────────────────
 IF EXISTS (SELECT 1 FROM sys.tables WHERE name = N'new_table' AND schema_id = SCHEMA_ID('dbo'))
-  AND EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'wheelhouse_app')
+  AND EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'pm_app')
 BEGIN
-  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.new_table TO wheelhouse_app;
-  PRINT 'Permissions on dbo.new_table granted to wheelhouse_app.';
+  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.new_table TO pm_app;
+  PRINT 'Permissions on dbo.new_table granted to pm_app.';
 END
 GO
 
@@ -120,7 +120,7 @@ GO
 -- ============================================================
 
 /*
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- Undo Example B: drop the new table

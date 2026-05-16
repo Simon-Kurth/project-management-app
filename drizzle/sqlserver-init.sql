@@ -1,5 +1,5 @@
 -- ============================================================
--- Wheelhouse Executive Dashboard — SQL Server Schema
+-- Project Management App — SQL Server Schema
 -- ============================================================
 -- Run this script once against your SQL Server database to
 -- create all required tables.  The script is idempotent:

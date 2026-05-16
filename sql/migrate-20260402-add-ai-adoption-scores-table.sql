@@ -1,13 +1,13 @@
 -- =============================================================================
 -- Migration: Add ai_adoption_scores table
 -- Date:      2026-04-02
--- Author:    Wheelhouse Platform
+-- Author:    Engineering
 -- Purpose:   Stores per-employee AI tool adoption scores and dimension breakdowns
 --            used by the HR → AI Adoption Rankings page.
 -- Run order: After create-database.sql and migrate-20260401-*.sql
 -- =============================================================================
 
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- ---------------------------------------------------------------------------
@@ -114,13 +114,13 @@ GO
 -- ---------------------------------------------------------------------------
 -- 6. Grant permissions to application login
 -- ---------------------------------------------------------------------------
-IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'wheelhouse_app')
+IF EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'pm_app')
 BEGIN
-  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.ai_adoption_scores TO wheelhouse_app;
-  PRINT 'Permissions granted to wheelhouse_app.';
+  GRANT SELECT, INSERT, UPDATE, DELETE ON dbo.ai_adoption_scores TO pm_app;
+  PRINT 'Permissions granted to pm_app.';
 END
 ELSE
-  PRINT 'wheelhouse_app login not found — run create-app-login.sql first.';
+  PRINT 'pm_app login not found — run create-app-login.sql first.';
 GO
 
 -- ---------------------------------------------------------------------------

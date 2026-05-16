@@ -1,5 +1,5 @@
 -- ============================================================
--- Wheelhouse Executive Dashboard
+-- Project Management App
 -- SQL Server Agent — Purge Maintenance Jobs + Email Alerts
 -- ============================================================
 --
@@ -10,19 +10,19 @@
 --      call the maintenance stored procedures on a schedule,
 --      each configured to email the DBA operator on failure.
 --
---   Job 1: Wheelhouse — Purge Expired Tokens
+--   Job 1: ProjectManagement — Purge Expired Tokens
 --     Calls dbo.usp_PurgeExpiredTokens every 15 minutes.
 --
---   Job 2: Wheelhouse — Purge Expired Snapshots
+--   Job 2: ProjectManagement — Purge Expired Snapshots
 --     Calls dbo.usp_PurgeExpiredSnapshots every hour.
 --
---   Job 3: Wheelhouse — Purge Old Audit Logs
+--   Job 3: ProjectManagement — Purge Old Audit Logs
 --     Calls dbo.usp_PurgeOldAuditLogs (365-day retention)
 --     at 02:00 UTC on the 1st of each month.
 --
 -- PREREQUISITES
 --   SQL Server Agent must be running.
---   The Wheelhouse database and stored procedures must exist
+--   Project Management App database and stored procedures must exist
 --   (run create-database.sql first).
 --   The login executing this script must be sysadmin or hold
 --   SQLAgentOperatorRole in msdb.
@@ -39,8 +39,8 @@
 --   Replace the four placeholder values below, then run:
 --   sqlcmd -S <server> -U sa -P <password> -d msdb
 --          -v SMTP_SERVER="smtp.office365.com"
---          -v SMTP_FROM="wheelhouse-alerts@company.com"
---          -v SMTP_USERNAME="wheelhouse-alerts@company.com"
+--          -v SMTP_FROM="pm-alerts@company.com"
+--          -v SMTP_USERNAME="pm-alerts@company.com"
 --          -v SMTP_PASSWORD="<app-password-from-key-vault>"
 --          -v DBA_EMAIL="dba-team@company.com"
 --          -i sql/maint-purge-agent-job.sql
@@ -73,22 +73,22 @@ GO
 -- Create the mail account (idempotent)
 IF NOT EXISTS (
   SELECT 1 FROM msdb.dbo.sysmail_account
-  WHERE name = N'Wheelhouse SMTP Account'
+  WHERE name = N'ProjectManagement SMTP Account'
 )
 BEGIN
   EXEC msdb.dbo.sysmail_add_account_sp
-    @account_name            = N'Wheelhouse SMTP Account',
-    @description             = N'SMTP account for Wheelhouse Agent job alerts',
+    @account_name            = N'ProjectManagement SMTP Account',
+    @description             = N'SMTP account for ProjectManagement Agent job alerts',
     -- Replace with your SMTP relay (Office 365, SendGrid, on-prem Exchange, etc.)
     @email_address           = N'$(SMTP_FROM)',
-    @display_name            = N'Wheelhouse Alerts',
+    @display_name            = N'ProjectManagement Alerts',
     @replyto_address         = N'$(SMTP_FROM)',
     @mailserver_name         = N'$(SMTP_SERVER)',
     @port                    = 587,
     @enable_ssl              = 1,
     @username                = N'$(SMTP_USERNAME)',
     @password                = N'$(SMTP_PASSWORD)';
-  PRINT 'Database Mail account ''Wheelhouse SMTP Account'' created.';
+  PRINT 'Database Mail account ''ProjectManagement SMTP Account'' created.';
 END
 ELSE
 BEGIN
@@ -99,25 +99,25 @@ GO
 -- Create the mail profile (idempotent)
 IF NOT EXISTS (
   SELECT 1 FROM msdb.dbo.sysmail_profile
-  WHERE name = N'Wheelhouse Alerts Profile'
+  WHERE name = N'ProjectManagement Alerts Profile'
 )
 BEGIN
   EXEC msdb.dbo.sysmail_add_profile_sp
-    @profile_name = N'Wheelhouse Alerts Profile',
-    @description  = N'Default profile for Wheelhouse Agent job failure alerts';
+    @profile_name = N'ProjectManagement Alerts Profile',
+    @description  = N'Default profile for ProjectManagement Agent job failure alerts';
 
   EXEC msdb.dbo.sysmail_add_profileaccount_sp
-    @profile_name   = N'Wheelhouse Alerts Profile',
-    @account_name   = N'Wheelhouse SMTP Account',
+    @profile_name   = N'ProjectManagement Alerts Profile',
+    @account_name   = N'ProjectManagement SMTP Account',
     @sequence_number = 1;
 
   -- Make this the default public profile so Agent can use it
   EXEC msdb.dbo.sysmail_add_principalprofile_sp
-    @profile_name   = N'Wheelhouse Alerts Profile',
+    @profile_name   = N'ProjectManagement Alerts Profile',
     @principal_name = N'public',
     @is_default     = 1;
 
-  PRINT 'Database Mail profile ''Wheelhouse Alerts Profile'' created.';
+  PRINT 'Database Mail profile ''ProjectManagement Alerts Profile'' created.';
 END
 ELSE
 BEGIN
@@ -133,10 +133,10 @@ GO
 -- on-call email address.
 -- ============================================================
 
-IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysoperators WHERE name = N'Wheelhouse DBA')
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysoperators WHERE name = N'ProjectManagement DBA')
 BEGIN
   EXEC msdb.dbo.sp_add_operator
-    @name                         = N'Wheelhouse DBA',
+    @name                         = N'ProjectManagement DBA',
     @enabled                      = 1,
     @email_address                = N'$(DBA_EMAIL)',
     @weekday_pager_start_time     = 090000,
@@ -144,11 +144,11 @@ BEGIN
     @saturday_pager_start_time    = 090000,
     @saturday_pager_end_time      = 120000,
     @pager_days                   = 62;    -- Mon–Sat
-  PRINT 'Operator ''Wheelhouse DBA'' created with email $(DBA_EMAIL).';
+  PRINT 'Operator ''ProjectManagement DBA'' created with email $(DBA_EMAIL).';
 END
 ELSE
 BEGIN
-  PRINT 'Operator ''Wheelhouse DBA'' already exists — skipping.';
+  PRINT 'Operator ''ProjectManagement DBA'' already exists — skipping.';
 END
 GO
 
@@ -156,24 +156,24 @@ GO
 -- SECTION 3 — JOB 1: Purge Expired Tokens (every 15 minutes)
 -- ============================================================
 
-IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N'Wheelhouse — Purge Expired Tokens')
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N'ProjectManagement — Purge Expired Tokens')
 BEGIN
   EXEC msdb.dbo.sp_add_job
-    @job_name                = N'Wheelhouse — Purge Expired Tokens',
+    @job_name                = N'ProjectManagement — Purge Expired Tokens',
     @enabled                 = 1,
     @description             = N'Purges expired rows from refresh_tokens, duo_state_store, and pending_auth_store.',
     @category_name           = N'[Uncategorized (Local)]',
     @notify_level_eventlog   = 2,   -- log on failure
     @notify_level_email      = 2,   -- email on failure
-    @notify_email_operator_name = N'Wheelhouse DBA';
+    @notify_email_operator_name = N'ProjectManagement DBA';
 
   EXEC msdb.dbo.sp_add_jobstep
-    @job_name          = N'Wheelhouse — Purge Expired Tokens',
+    @job_name          = N'ProjectManagement — Purge Expired Tokens',
     @step_name         = N'Execute usp_PurgeExpiredTokens',
     @step_id           = 1,
     @subsystem         = N'TSQL',
     @command           = N'EXEC dbo.usp_PurgeExpiredTokens;',
-    @database_name     = N'Wheelhouse',
+    @database_name     = N'ProjectManagement',
     @on_success_action = 1,
     @on_fail_action    = 2;
 
@@ -187,23 +187,23 @@ BEGIN
     @active_end_time      = 235959;
 
   EXEC msdb.dbo.sp_attach_schedule
-    @job_name      = N'Wheelhouse — Purge Expired Tokens',
+    @job_name      = N'ProjectManagement — Purge Expired Tokens',
     @schedule_name = N'Every 15 Minutes';
 
   EXEC msdb.dbo.sp_add_jobserver
-    @job_name    = N'Wheelhouse — Purge Expired Tokens',
+    @job_name    = N'ProjectManagement — Purge Expired Tokens',
     @server_name = N'(LOCAL)';
 
-  PRINT 'Job ''Wheelhouse — Purge Expired Tokens'' created.';
+  PRINT 'Job ''ProjectManagement — Purge Expired Tokens'' created.';
 END
 ELSE
 BEGIN
   -- If the job already exists, ensure the email alert is wired up
   EXEC msdb.dbo.sp_update_job
-    @job_name                    = N'Wheelhouse — Purge Expired Tokens',
+    @job_name                    = N'ProjectManagement — Purge Expired Tokens',
     @notify_level_email          = 2,
-    @notify_email_operator_name  = N'Wheelhouse DBA';
-  PRINT 'Job ''Wheelhouse — Purge Expired Tokens'' updated with email alert.';
+    @notify_email_operator_name  = N'ProjectManagement DBA';
+  PRINT 'Job ''ProjectManagement — Purge Expired Tokens'' updated with email alert.';
 END
 GO
 
@@ -211,24 +211,24 @@ GO
 -- SECTION 4 — JOB 2: Purge Expired Snapshots (every hour)
 -- ============================================================
 
-IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N'Wheelhouse — Purge Expired Snapshots')
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N'ProjectManagement — Purge Expired Snapshots')
 BEGIN
   EXEC msdb.dbo.sp_add_job
-    @job_name                = N'Wheelhouse — Purge Expired Snapshots',
+    @job_name                = N'ProjectManagement — Purge Expired Snapshots',
     @enabled                 = 1,
     @description             = N'Purges dashboard_snapshots rows past their expiresAt timestamp.',
     @category_name           = N'[Uncategorized (Local)]',
     @notify_level_eventlog   = 2,
     @notify_level_email      = 2,
-    @notify_email_operator_name = N'Wheelhouse DBA';
+    @notify_email_operator_name = N'ProjectManagement DBA';
 
   EXEC msdb.dbo.sp_add_jobstep
-    @job_name          = N'Wheelhouse — Purge Expired Snapshots',
+    @job_name          = N'ProjectManagement — Purge Expired Snapshots',
     @step_name         = N'Execute usp_PurgeExpiredSnapshots',
     @step_id           = 1,
     @subsystem         = N'TSQL',
     @command           = N'EXEC dbo.usp_PurgeExpiredSnapshots;',
-    @database_name     = N'Wheelhouse',
+    @database_name     = N'ProjectManagement',
     @on_success_action = 1,
     @on_fail_action    = 2;
 
@@ -242,22 +242,22 @@ BEGIN
     @active_end_time      = 235959;
 
   EXEC msdb.dbo.sp_attach_schedule
-    @job_name      = N'Wheelhouse — Purge Expired Snapshots',
+    @job_name      = N'ProjectManagement — Purge Expired Snapshots',
     @schedule_name = N'Every Hour';
 
   EXEC msdb.dbo.sp_add_jobserver
-    @job_name    = N'Wheelhouse — Purge Expired Snapshots',
+    @job_name    = N'ProjectManagement — Purge Expired Snapshots',
     @server_name = N'(LOCAL)';
 
-  PRINT 'Job ''Wheelhouse — Purge Expired Snapshots'' created.';
+  PRINT 'Job ''ProjectManagement — Purge Expired Snapshots'' created.';
 END
 ELSE
 BEGIN
   EXEC msdb.dbo.sp_update_job
-    @job_name                    = N'Wheelhouse — Purge Expired Snapshots',
+    @job_name                    = N'ProjectManagement — Purge Expired Snapshots',
     @notify_level_email          = 2,
-    @notify_email_operator_name  = N'Wheelhouse DBA';
-  PRINT 'Job ''Wheelhouse — Purge Expired Snapshots'' updated with email alert.';
+    @notify_email_operator_name  = N'ProjectManagement DBA';
+  PRINT 'Job ''ProjectManagement — Purge Expired Snapshots'' updated with email alert.';
 END
 GO
 
@@ -265,24 +265,24 @@ GO
 -- SECTION 5 — JOB 3: Purge Old Audit Logs (monthly)
 -- ============================================================
 
-IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N'Wheelhouse — Purge Old Audit Logs')
+IF NOT EXISTS (SELECT 1 FROM msdb.dbo.sysjobs WHERE name = N'ProjectManagement — Purge Old Audit Logs')
 BEGIN
   EXEC msdb.dbo.sp_add_job
-    @job_name                = N'Wheelhouse — Purge Old Audit Logs',
+    @job_name                = N'ProjectManagement — Purge Old Audit Logs',
     @enabled                 = 1,
     @description             = N'Purges audit_logs rows older than 365 days. Runs at 02:00 UTC on the 1st of each month.',
     @category_name           = N'[Uncategorized (Local)]',
     @notify_level_eventlog   = 2,
     @notify_level_email      = 2,
-    @notify_email_operator_name = N'Wheelhouse DBA';
+    @notify_email_operator_name = N'ProjectManagement DBA';
 
   EXEC msdb.dbo.sp_add_jobstep
-    @job_name          = N'Wheelhouse — Purge Old Audit Logs',
+    @job_name          = N'ProjectManagement — Purge Old Audit Logs',
     @step_name         = N'Execute usp_PurgeOldAuditLogs',
     @step_id           = 1,
     @subsystem         = N'TSQL',
     @command           = N'EXEC dbo.usp_PurgeOldAuditLogs @retentionDays = 365;',
-    @database_name     = N'Wheelhouse',
+    @database_name     = N'ProjectManagement',
     @on_success_action = 1,
     @on_fail_action    = 2;
 
@@ -295,22 +295,22 @@ BEGIN
     @active_start_time    = 020000;
 
   EXEC msdb.dbo.sp_attach_schedule
-    @job_name      = N'Wheelhouse — Purge Old Audit Logs',
+    @job_name      = N'ProjectManagement — Purge Old Audit Logs',
     @schedule_name = N'Monthly 1st at 0200';
 
   EXEC msdb.dbo.sp_add_jobserver
-    @job_name    = N'Wheelhouse — Purge Old Audit Logs',
+    @job_name    = N'ProjectManagement — Purge Old Audit Logs',
     @server_name = N'(LOCAL)';
 
-  PRINT 'Job ''Wheelhouse — Purge Old Audit Logs'' created.';
+  PRINT 'Job ''ProjectManagement — Purge Old Audit Logs'' created.';
 END
 ELSE
 BEGIN
   EXEC msdb.dbo.sp_update_job
-    @job_name                    = N'Wheelhouse — Purge Old Audit Logs',
+    @job_name                    = N'ProjectManagement — Purge Old Audit Logs',
     @notify_level_email          = 2,
-    @notify_email_operator_name  = N'Wheelhouse DBA';
-  PRINT 'Job ''Wheelhouse — Purge Old Audit Logs'' updated with email alert.';
+    @notify_email_operator_name  = N'ProjectManagement DBA';
+  PRINT 'Job ''ProjectManagement — Purge Old Audit Logs'' updated with email alert.';
 END
 GO
 
@@ -322,9 +322,9 @@ GO
 -- ============================================================
 
 EXEC msdb.dbo.sp_send_dbmail
-  @profile_name  = N'Wheelhouse Alerts Profile',
+  @profile_name  = N'ProjectManagement Alerts Profile',
   @recipients    = N'$(DBA_EMAIL)',
-  @subject       = N'[Wheelhouse] Database Mail test — setup complete',
+  @subject       = N'[ProjectManagement] Database Mail test — setup complete',
   @body          = N'Database Mail is configured and SQL Server Agent jobs are active. This is a test message sent during initial setup.';
 GO
 
@@ -335,7 +335,7 @@ GO
 -- SECTION 7 — VERIFICATION
 -- ============================================================
 
--- List all three Wheelhouse jobs with schedule and last run status
+-- List all three ProjectManagement jobs with schedule and last run status
 SELECT
   j.name                                          AS [Job],
   j.enabled                                       AS [Enabled],
@@ -366,7 +366,7 @@ LEFT JOIN (
 ) lh ON lh.job_id = j.job_id
 LEFT JOIN msdb.dbo.sysjobhistory jh
   ON jh.job_id = lh.job_id AND jh.instance_id = lh.last_id
-WHERE j.name LIKE N'Wheelhouse%'
+WHERE j.name LIKE N'ProjectManagement%'
 ORDER BY j.name;
 GO
 
@@ -380,7 +380,7 @@ FROM msdb.dbo.sysmail_sentitems
 ORDER BY sent_date DESC;
 GO
 
-PRINT '=== Wheelhouse Agent jobs + email alerts setup complete ===';
+PRINT '=== ProjectManagement Agent jobs + email alerts setup complete ===';
 GO
 
 -- ============================================================
@@ -412,7 +412,7 @@ GO
 --         await sgMail.send({
 --           to: process.env.DBA_EMAIL!,
 --           from: process.env.ALERT_FROM_EMAIL!,
---           subject: "[Wheelhouse] Purge Expired Tokens FAILED",
+--           subject: "[ProjectManagement] Purge Expired Tokens FAILED",
 --           text: String(err),
 --         });
 --         throw err;

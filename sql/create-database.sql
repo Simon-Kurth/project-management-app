@@ -1,10 +1,10 @@
 -- ============================================================
--- Wheelhouse Executive Dashboard
+-- Project Management App
 -- SQL Server Full Database Creation Script
 -- ============================================================
 --
 -- PURPOSE
---   Creates the Wheelhouse database from scratch on a fresh
+--   Creates the Project Management App database from scratch on a fresh
 --   SQL Server instance.  Run this script once as a sysadmin
 --   or dbcreator-role login before starting the application.
 --
@@ -46,27 +46,27 @@
 USE master;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'Wheelhouse')
+IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = N'ProjectManagement')
 BEGIN
-  CREATE DATABASE Wheelhouse
+  CREATE DATABASE ProjectManagement
     COLLATE SQL_Latin1_General_CP1_CI_AS;   -- case-insensitive, accent-sensitive
-  PRINT 'Database Wheelhouse created.';
+  PRINT 'Database ProjectManagement created.';
 END
 ELSE
 BEGIN
-  PRINT 'Database Wheelhouse already exists — skipping creation.';
+  PRINT 'Database ProjectManagement already exists — skipping creation.';
 END
 GO
 
 -- Set recommended options for a web application database
-ALTER DATABASE Wheelhouse SET RECOVERY SIMPLE;          -- change to FULL for production with log backups
-ALTER DATABASE Wheelhouse SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;  -- enables MVCC-style reads
-ALTER DATABASE Wheelhouse SET ALLOW_SNAPSHOT_ISOLATION ON;
-ALTER DATABASE Wheelhouse SET AUTO_UPDATE_STATISTICS ON;
-ALTER DATABASE Wheelhouse SET AUTO_CREATE_STATISTICS ON;
+ALTER DATABASE ProjectManagement SET RECOVERY SIMPLE;          -- change to FULL for production with log backups
+ALTER DATABASE ProjectManagement SET READ_COMMITTED_SNAPSHOT ON WITH ROLLBACK IMMEDIATE;  -- enables MVCC-style reads
+ALTER DATABASE ProjectManagement SET ALLOW_SNAPSHOT_ISOLATION ON;
+ALTER DATABASE ProjectManagement SET AUTO_UPDATE_STATISTICS ON;
+ALTER DATABASE ProjectManagement SET AUTO_CREATE_STATISTICS ON;
 GO
 
-USE Wheelhouse;
+USE ProjectManagement;
 GO
 
 -- ============================================================
@@ -85,10 +85,9 @@ GO
 
 -- ─── 3.1  users ──────────────────────────────────────────────────────────────
 --
--- Central identity table.  Supports three login methods:
---   password  — demo / local accounts (passwordHash set)
+-- Central identity table.  Supports two login methods:
+--   password  — local accounts (passwordHash set)
 --   entra     — Microsoft Entra ID SSO (entraOid / entraUpn set)
---   manus     — Manus OAuth (openId set to Manus openId)
 --
 IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = N'users' AND schema_id = SCHEMA_ID('dbo'))
 BEGIN
@@ -96,13 +95,13 @@ BEGIN
     -- Primary key
     id              INT             IDENTITY(1,1)   NOT NULL,
 
-    -- Manus OAuth / internal stable identifier
+    -- Internal stable identifier (UUID or Entra OID)
     openId          NVARCHAR(255)   NOT NULL,
 
     -- Profile
     name            NVARCHAR(255)   NULL,
     email           NVARCHAR(320)   NULL,           -- RFC 5321 max length
-    loginMethod     NVARCHAR(64)    NULL,           -- 'password' | 'entra' | 'manus'
+    loginMethod     NVARCHAR(64)    NULL,           -- 'password' | 'entra'
 
     -- Role-based access control
     -- Roles: user | admin | executive | company | qa | sales_marketing | csm
@@ -132,8 +131,8 @@ BEGIN
     -- Constraints
     CONSTRAINT PK_users             PRIMARY KEY CLUSTERED (id),
     CONSTRAINT UQ_users_openId      UNIQUE (openId),
-    CONSTRAINT CK_users_role        CHECK (role IN ('user','admin','executive','company','qa','sales_marketing','csm')),
-    CONSTRAINT CK_users_loginMethod CHECK (loginMethod IN ('password','entra','manus') OR loginMethod IS NULL)
+    CONSTRAINT CK_users_role        CHECK (role IN ('user','admin','executive','company')),
+    CONSTRAINT CK_users_loginMethod CHECK (loginMethod IN ('password','entra') OR loginMethod IS NULL)
   );
 
   PRINT 'Table dbo.users created.';
@@ -411,8 +410,8 @@ GO
 -- (Declared inline in CREATE TABLE; documented here for reference.)
 -- ============================================================
 --
--- CK_users_role        : role IN ('user','admin','executive','company','qa','sales_marketing','csm')
--- CK_users_loginMethod : loginMethod IN ('password','entra','manus') OR NULL
+-- CK_users_role        : role IN ('user','admin','executive','company')
+-- CK_users_loginMethod : loginMethod IN ('password','entra') OR NULL
 --
 -- ============================================================
 
@@ -619,5 +618,5 @@ WHERE p.schema_id = SCHEMA_ID('dbo')
 ORDER BY p.name;
 GO
 
-PRINT '=== Wheelhouse database setup complete ===';
+PRINT '=== ProjectManagement database setup complete ===';
 GO
