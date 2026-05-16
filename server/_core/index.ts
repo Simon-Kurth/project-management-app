@@ -69,7 +69,7 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    // Start background Jira sync scheduler (no-op if JIRA_SYNC_ENABLED=false or unconfigured)
+    // Start background Azure Boards sync scheduler (no-op if AZURE_SYNC_ENABLED=false or unconfigured)
     startScheduler();
     // Start KPI threshold monitor (no-op if KPI_MONITOR_ENABLED=false)
     startKpiMonitor();

@@ -56,7 +56,7 @@ interface ThresholdRule {
 // To disable a rule without deleting it, set `threshold` to Infinity / -Infinity.
 
 const THRESHOLD_RULES: ThresholdRule[] = [
-  // ── Delivery / Jira ────────────────────────────────────────────────────────
+  // ── Delivery / Azure Boards ───────────────────────────────────────────────
   {
     name:        "Sprint Velocity Drop",
     boardId:     "default",

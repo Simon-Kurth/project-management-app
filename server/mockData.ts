@@ -352,13 +352,12 @@ export const mockData = {
 
 // ─── Connector Framework Stubs ────────────────────────────────────────────────
 export const connectorStubs = {
-  jira: {
-    name: "Jira REST API",
-    type: "jira_rest",
-    description: "Ingest sprint data, issue counts, velocity, and project status from Jira.",
-    requiredConfig: { base_url: "string", project_key: "string", api_token: "string", email: "string" },
+  azureBoards: {
+    name: "Azure DevOps Boards",
+    type: "azure_devops_rest",
+    description: "Ingest sprint data, work item counts, velocity, and project status from Azure Boards.",
+    requiredConfig: { org: "string", project: "string", pat: "string", team: "string (optional)" },
     status: "not_configured",
-    // TODO: Implement with: GET /rest/api/3/search?jql=project={key}&fields=summary,status,assignee,priority,story_points
   },
   github: {
     name: "GitHub REST API",

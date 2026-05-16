@@ -11,7 +11,7 @@
 
 import sql from "mssql";
 import { execute, insertGetId, query, getPool } from "./sqlserver";
-import type { ComputedDeliveryKPIs } from "./connectors/jira";
+import type { ComputedDeliveryKPIs } from "./connectors/azureBoards";
 import { ENV } from "./_core/env";
 
 // ─── Types (mirror the schema) ────────────────────────────────────────────────
@@ -256,7 +256,7 @@ export async function getConnectorConfigs() {
   );
 }
 
-// ─── Computed KPI Helpers (Jira pipeline) ─────────────────────────────────────
+// ─── Computed KPI Helpers (Azure Boards pipeline) ─────────────────────────────
 
 export async function upsertComputedKPIs(entry: {
   boardId: string;
@@ -274,7 +274,7 @@ export async function upsertComputedKPIs(entry: {
      WHEN NOT MATCHED THEN INSERT
        (boardId, kpiType, data, source, computedAt, createdAt, updatedAt)
      VALUES
-       (@boardId, @kpiType, @data, 'jira', @computedAt, GETUTCDATE(), GETUTCDATE());`,
+       (@boardId, @kpiType, @data, 'azure-boards', @computedAt, GETUTCDATE(), GETUTCDATE());`,
     {
       boardId:    { type: sql.NVarChar(64),       value: entry.boardId },
       kpiType:    { type: sql.NVarChar(64),       value: entry.kpiType },
@@ -309,7 +309,7 @@ export async function seedConnectors(): Promise<void> {
   const pool = await getPool();
   if (!pool) return;
   const stubs = [
-    { name: "jira",             connectorType: "jira_rest",       config: { base_url: "", project_key: "", api_token: "" } },
+    { name: "azure-boards",     connectorType: "azure_devops_rest", config: { org: "", project: "", pat: "" } },
     { name: "github",           connectorType: "github_rest",     config: { org: "", repo: "", token: "" } },
     { name: "salesforce",       connectorType: "salesforce_rest", config: { instance_url: "", client_id: "", client_secret: "" } },
     { name: "csv_upload",       connectorType: "file_upload",     config: { allowed_types: ["csv", "json"], max_size_mb: 10 } },

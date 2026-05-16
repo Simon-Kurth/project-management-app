@@ -88,15 +88,15 @@ export const connectorConfigs = mysqlTable("connector_configs", {
 
 export type ConnectorConfig = typeof connectorConfigs.$inferSelect;
 
-// ─── Computed KPIs (Jira pipeline output) ─────────────────────────────────────
-// Stores ONLY pre-aggregated KPI values — never raw issue data.
-// The dashboard reads from this table; Jira API is never called on page load.
+// ─── Computed KPIs (Azure Boards pipeline output) ─────────────────────────────
+// Stores ONLY pre-aggregated KPI values — never raw work item data.
+// The dashboard reads from this table; Azure DevOps API is never called on page load.
 export const computedKpis = mysqlTable("computed_kpis", {
   id: int("id").autoincrement().primaryKey(),
   boardId: varchar("boardId", { length: 64 }).notNull(),
   kpiType: varchar("kpiType", { length: 64 }).notNull(), // "delivery" | "development"
   data: json("data").notNull(),                          // ComputedDeliveryKPIs JSON
-  source: varchar("source", { length: 32 }).default("jira").notNull(),
+  source: varchar("source", { length: 32 }).default("azure-boards").notNull(),
   computedAt: timestamp("computedAt").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

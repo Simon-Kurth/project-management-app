@@ -70,8 +70,7 @@ interface AzureWorkItemRevision {
 }
 
 // ---------------------------------------------------------------------------
-// Re-exported output types — identical to the Jira connector's output so
-// nothing downstream needs to change.
+// Output types — shared KPI shape used by the scheduler, routers, and DB layer.
 // ---------------------------------------------------------------------------
 
 export interface AzureIteration_Sprint {
