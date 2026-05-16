@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AlertCircle, Anchor, Lock, Mail, Shield } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 
 // Microsoft logo SVG (official brand colours)
 function MicrosoftLogo() {
@@ -314,24 +313,6 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
-
-            {/* Divider before Manus SSO */}
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-[#E2E8F0]" />
-              <span className="text-xs text-[#6E7791]">or</span>
-              <div className="flex-1 h-px bg-[#E2E8F0]" />
-            </div>
-
-            {/* Manus SSO (platform login) */}
-            <a href={getLoginUrl()} className="block">
-              <Button
-                variant="outline"
-                className="w-full border-[#E2E8F0] text-[#141A2B] bg-white hover:bg-[#F0F4F8] font-medium"
-              >
-                <Shield className="w-4 h-4 mr-2 text-[#134C93]" />
-                Sign in with Manus SSO
-              </Button>
-            </a>
 
             {/* Demo credentials quick-fill */}
             <div className="mt-6 p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">

@@ -1,5 +1,5 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+// Storage helpers — configure BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY
+// to point at an S3-compatible storage proxy (Authorization: Bearer <token>)
 
 import { ENV } from './_core/env';
 

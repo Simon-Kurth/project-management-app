@@ -12,7 +12,6 @@
 import sql from "mssql";
 import { execute, insertGetId, query, getPool } from "./sqlserver";
 import type { ComputedDeliveryKPIs } from "./connectors/azureBoards";
-import { ENV } from "./_core/env";
 
 // ─── Types (mirror the schema) ────────────────────────────────────────────────
 
@@ -67,7 +66,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   const pool = await getPool();
   if (!pool) return;
 
-  const role = user.role ?? (user.openId === ENV.ownerOpenId ? "admin" : undefined);
+  const role = user.role ?? undefined;
   const lastSignedIn = user.lastSignedIn ?? new Date();
 
   // MERGE (upsert) on openId

@@ -209,10 +209,12 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+const resolveApiUrl = () => {
+  if (!ENV.forgeApiUrl || !ENV.forgeApiUrl.trim()) {
+    throw new Error("LLM not configured. Set BUILT_IN_FORGE_API_URL to an OpenAI-compatible endpoint.");
+  }
+  return `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`;
+};
 
 const assertApiKey = () => {
   if (!ENV.forgeApiKey) {
